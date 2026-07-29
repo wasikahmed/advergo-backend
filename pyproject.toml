@@ -1,0 +1,57 @@
+[project]
+name = "advergo-backend"
+version = "0.1.0"
+description = "Advergo Sports & Fashion Wear Ltd. -- backend API"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "django>=5.1",
+    "djangorestframework>=3.15",
+    "djangorestframework-simplejwt>=5.3",
+    "django-cors-headers>=4.4",
+    "django-filter>=24.3",
+    "drf-spectacular>=0.27",
+    "django-cloudinary-storage>=0.3",
+    "cloudinary>=1.41",
+    "djangorestframework-camel-case>=1.4",
+    "pillow>=10.4",
+    "celery>=5.4",
+    "redis>=5.0",
+    "weasyprint>=62.0",
+    "django-environ>=0.11",
+    "psycopg[binary]>=3.2",
+    "gunicorn>=23.0",
+    "whitenoise>=6.7",
+    "sentry-sdk>=2.13",
+    "django-unfold>=0.38",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "factory-boy>=3.3",
+    "ruff>=0.6",
+    "pre-commit>=3.8",
+    "django-extensions>=3.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ"]
+ignore = ["DJ001"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.ruff.lint.per-file-ignores]
+# Seed data: long copy strings read better unwrapped than split mid-sentence.
+"apps/core/management/commands/seed_demo_data.py" = ["E501"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+addopts = "-ra"

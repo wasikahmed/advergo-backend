@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4; margin: 2.2cm 1.8cm; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 12px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #eb2127; padding-bottom: 14px; margin-bottom: 24px; }
+  .company-name { font-size: 18px; font-weight: bold; color: #010101; margin: 0 0 4px; }
+  .company-detail { color: #555; font-size: 10.5px; line-height: 1.5; }
+  .invoice-title { text-align: right; }
+  .invoice-title h1 { font-size: 22px; color: #eb2127; margin: 0; letter-spacing: 1px; }
+  .invoice-title p { margin: 2px 0; color: #555; font-size: 10.5px; }
+  .meta-table { width: 100%; margin-bottom: 22px; border-collapse: collapse; }
+  .meta-table td { vertical-align: top; padding: 0; width: 50%; }
+  .meta-label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.06em; color: #888; margin-bottom: 3px; }
+  .meta-value { font-size: 12.5px; font-weight: bold; color: #111; }
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  table.items th { background: #f8f8f8; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #555; border-bottom: 2px solid #eee; }
+  table.items td { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; }
+  table.items .num { text-align: right; }
+  .totals { width: 260px; margin-left: auto; margin-top: 10px; }
+  .totals table { width: 100%; border-collapse: collapse; }
+  .totals td { padding: 5px 0; font-size: 12px; }
+  .totals .label { color: #555; }
+  .totals .value { text-align: right; font-weight: bold; }
+  .totals .due-row { border-top: 2px solid #eb2127; }
+  .totals .due-row .value { color: #eb2127; font-size: 14px; }
+  .footer-note { margin-top: 40px; font-size: 10.5px; color: #777; border-top: 1px solid #eee; padding-top: 12px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <p class="company-name">{{ company.name }}</p>
+      <div class="company-detail">
+        {{ company.head_office }}<br />
+        {{ company.phone }} &middot; {{ company.email }}
+      </div>
+    </div>
+    <div class="invoice-title">
+      <h1>INVOICE</h1>
+      <p>{{ invoice_number }}</p>
+      <p>{{ issued_date }}</p>
+    </div>
+  </div>
+
+  <table class="meta-table">
+    <tr>
+      <td>
+        <div class="meta-label">Billed to</div>
+        <div class="meta-value">{{ order.name }}</div>
+        <div class="company-detail">{{ order.phone }}{% if order.email %} &middot; {{ order.email }}{% endif %}</div>
+      </td>
+      <td>
+        <div class="meta-label">Order reference</div>
+        <div class="meta-value">{{ order.reference_code }}</div>
+        <div class="company-detail">Status: {{ order.get_status_display }}</div>
+      </td>
+    </tr>
+  </table>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="num">Quantity</th>
+        <th class="num">Unit price</th>
+        <th class="num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {{ order.product.name|default:"Custom sportswear order" }}
+          {% if order.fabric %}<br /><span class="company-detail">Fabric: {{ order.fabric.name }}</span>{% endif %}
+          {% if order.size_breakdown %}<br /><span class="company-detail">Sizes: {{ order.size_breakdown }}</span>{% endif %}
+        </td>
+        <td class="num">{{ order.total_quantity }}</td>
+        <td class="num">{% if order.unit_price %}৳{{ order.unit_price }}{% else %}—{% endif %}</td>
+        <td class="num">{% if order.total_value %}৳{{ order.total_value }}{% else %}—{% endif %}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      <tr>
+        <td class="label">Total value</td>
+        <td class="value">{% if order.total_value %}৳{{ order.total_value }}{% else %}—{% endif %}</td>
+      </tr>
+      <tr>
+        <td class="label">Advance paid</td>
+        <td class="value">৳{{ order.advance_paid }}</td>
+      </tr>
+      <tr class="due-row">
+        <td class="label">Balance due</td>
+        <td class="value">{% if due_amount is not None %}৳{{ due_amount }}{% else %}—{% endif %}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="footer-note">
+    No online payment was collected for this order. Please settle the balance due directly with our
+    team by phone or WhatsApp ({{ company.phone }}). Thank you for choosing {{ company.name }}.
+  </div>
+</body>
+</html>

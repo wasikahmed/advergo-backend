@@ -1,0 +1,100 @@
+from rest_framework import serializers
+
+from apps.core.utils import generate_reference_code
+from apps.pricing.services import estimate_price
+
+from .models import QuoteRequest
+
+
+class QuoteRequestCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuoteRequest
+        fields = [
+            "id",
+            "reference_code",
+            "name",
+            "phone",
+            "email",
+            "category",
+            "product",
+            "fabric",
+            "quantity",
+            "size_breakdown",
+            "design_file",
+            "notes",
+            "estimated_price_low",
+            "estimated_price_high",
+        ]
+        read_only_fields = ["id", "reference_code", "estimated_price_low", "estimated_price_high"]
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        if request is not None and request.user.is_authenticated:
+            validated_data["user"] = request.user
+
+        estimate = estimate_price(
+            fabric=validated_data.get("fabric"),
+            category=validated_data.get("category"),
+            quantity=validated_data["quantity"],
+        )
+        validated_data["estimated_price_low"] = estimate.unit_price_low * validated_data["quantity"]
+        validated_data["estimated_price_high"] = (
+            estimate.unit_price_high * validated_data["quantity"]
+        )
+        validated_data["reference_code"] = generate_reference_code("QR")
+
+        return super().create(validated_data)
+
+
+class QuoteRequestAdminSerializer(serializers.ModelSerializer):
+    """Full view for staff: adds status/admin_notes and read-friendly labels."""
+
+    product_name = serializers.CharField(source="product.name", read_only=True, default=None)
+    fabric_name = serializers.CharField(source="fabric.name", read_only=True, default=None)
+    category_name = serializers.CharField(source="category.name", read_only=True, default=None)
+
+    class Meta:
+        model = QuoteRequest
+        fields = [
+            "id",
+            "reference_code",
+            "user",
+            "name",
+            "phone",
+            "email",
+            "category",
+            "category_name",
+            "product",
+            "product_name",
+            "fabric",
+            "fabric_name",
+            "quantity",
+            "size_breakdown",
+            "design_file",
+            "notes",
+            "estimated_price_low",
+            "estimated_price_high",
+            "status",
+            "admin_notes",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "reference_code",
+            "user",
+            "name",
+            "phone",
+            "email",
+            "category",
+            "product",
+            "fabric",
+            "quantity",
+            "size_breakdown",
+            "design_file",
+            "notes",
+            "estimated_price_low",
+            "estimated_price_high",
+            "created_at",
+            "updated_at",
+        ]

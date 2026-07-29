@@ -1,0 +1,71 @@
+# Local development stack. For production, see docker-compose.prod.yml.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: advergo
+      POSTGRES_PASSWORD: advergo
+      POSTGRES_DB: advergo
+    ports:
+      - "5432:5432"
+    volumes:
+      - advergo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U advergo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: uv run python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      # Named volume for .venv so the bind mount above doesn't shadow the
+      # dependencies installed into the image during build.
+      - advergo_venv:/app/.venv
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://advergo:advergo@db:5432/advergo
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: uv run celery -A config worker -l info
+    volumes:
+      - .:/app
+      - advergo_venv:/app/.venv
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://advergo:advergo@db:5432/advergo
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  advergo_pgdata:
+  advergo_venv:
