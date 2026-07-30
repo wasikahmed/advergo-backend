@@ -12,6 +12,11 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
+# Mount point for the Django admin. Defaults to "admin/" for local dev
+# convenience; production sets ADMIN_URL to a non-guessable slug via .env.prod
+# so the admin isn't sitting at the first path any scanner tries.
+ADMIN_URL = env("ADMIN_URL", default="admin/")
+
 DJANGO_APPS = [
     "unfold",
     "unfold.contrib.filters",
