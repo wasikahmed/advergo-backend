@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 
 from apps.core.models import TimeStampedModel
+from apps.core.storage import get_raw_file_storage
 
 
 class BannerQuerySet(models.QuerySet):
@@ -74,8 +75,10 @@ class Achievement(TimeStampedModel):
 
 class ClientLogo(TimeStampedModel):
     name = models.CharField(max_length=120)
-    # External URL (e.g. Clearbit's logo API) by design -- not something we host ourselves.
-    logo_url = models.URLField()
+    # Either an external URL (e.g. Clearbit's logo API) or an uploaded image --
+    # logo_image wins when both are set (see `logo` property).
+    logo_url = models.URLField(blank=True)
+    logo_image = models.ImageField(upload_to="clients/", blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -83,6 +86,10 @@ class ClientLogo(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    @property
+    def logo(self):
+        return self.logo_image.url if self.logo_image else self.logo_url
 
 
 class ProcessStep(TimeStampedModel):
@@ -132,6 +139,10 @@ class CompanyInfo(TimeStampedModel):
     founded = models.CharField(max_length=10, blank=True)
     md = models.CharField(max_length=120, blank=True)
     chairman = models.CharField(max_length=120, blank=True)
+    trade_license_no = models.CharField(max_length=60, blank=True)
+    about = models.TextField(blank=True)
+    mission = models.TextField(blank=True)
+    vision = models.TextField(blank=True)
 
     class Meta:
         verbose_name = verbose_name_plural = "company info"
@@ -145,3 +156,74 @@ class CompanyInfo(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+
+class TeamMember(TimeStampedModel):
+    name = models.CharField(max_length=120)
+    role = models.CharField(max_length=120)
+    photo = models.ImageField(upload_to="team/", blank=True, null=True)
+    bio = models.TextField(blank=True, help_text="Leadership quote/bio; usually blank for staff.")
+    is_leadership = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.role})"
+
+
+class BankAccount(TimeStampedModel):
+    bank_name = models.CharField(max_length=120)
+    account_name = models.CharField(max_length=150)
+    account_number = models.CharField(max_length=40)
+    routing_number = models.CharField(max_length=30, blank=True)
+    branch_name = models.CharField(max_length=150, blank=True)
+    swift_code = models.CharField(max_length=20, blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "bank_name"]
+
+    def __str__(self):
+        return f"{self.bank_name} ({self.account_number})"
+
+
+class MobileBankingAgent(TimeStampedModel):
+    provider = models.CharField(max_length=40, help_text="e.g. bKash, Nagad")
+    agent_number = models.CharField(max_length=20)
+    label = models.CharField(max_length=40, blank=True, help_text="e.g. Agent, Merchant")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "provider"]
+
+    def __str__(self):
+        return f"{self.provider} — {self.agent_number}"
+
+
+class OfficialDocumentType(models.TextChoices):
+    TRADE_LICENSE = "trade_license", "Trade License"
+    TIN = "tin", "TIN Certificate"
+    BIN = "bin", "BIN Certificate"
+    INCORPORATION = "incorporation", "Certificate of Incorporation"
+
+
+class OfficialDocument(TimeStampedModel):
+    """Internal record only -- deliberately has no serializer/viewset/API route.
+    Only ever reachable via Django admin (staff login required). See
+    apps.core.storage.get_raw_file_storage for the storage/privacy tradeoffs."""
+
+    doc_type = models.CharField(max_length=30, choices=OfficialDocumentType.choices)
+    reference_number = models.CharField(max_length=100, blank=True)
+    issue_date = models.DateField(null=True, blank=True)
+    file = models.FileField(
+        upload_to="official_documents/", storage=get_raw_file_storage, blank=True, null=True
+    )
+    notes = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ["doc_type"]
+
+    def __str__(self):
+        return self.get_doc_type_display()

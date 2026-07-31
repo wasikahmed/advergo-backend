@@ -1,6 +1,17 @@
 from rest_framework import serializers
 
-from .models import Achievement, Banner, ClientLogo, CompanyInfo, GalleryItem, ProcessStep, Stat
+from .models import (
+    Achievement,
+    Banner,
+    BankAccount,
+    ClientLogo,
+    CompanyInfo,
+    GalleryItem,
+    MobileBankingAgent,
+    ProcessStep,
+    Stat,
+    TeamMember,
+)
 
 
 class BannerSerializer(serializers.ModelSerializer):
@@ -24,9 +35,17 @@ class AchievementSerializer(serializers.ModelSerializer):
 
 
 class ClientLogoSerializer(serializers.ModelSerializer):
+    logo = serializers.SerializerMethodField()
+
     class Meta:
         model = ClientLogo
-        fields = ["id", "name", "logo_url"]
+        fields = ["id", "name", "logo", "logo_url"]
+
+    def get_logo(self, obj):
+        if not obj.logo:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.logo) if request else obj.logo
 
 
 class ProcessStepSerializer(serializers.ModelSerializer):
@@ -58,4 +77,36 @@ class CompanyInfoSerializer(serializers.ModelSerializer):
             "founded",
             "md",
             "chairman",
+            "trade_license_no",
+            "about",
+            "mission",
+            "vision",
         ]
+
+
+class TeamMemberSerializer(serializers.ModelSerializer):
+    photo = serializers.ImageField(use_url=True, required=False, allow_null=True)
+
+    class Meta:
+        model = TeamMember
+        fields = ["id", "name", "role", "photo", "bio", "is_leadership"]
+
+
+class BankAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            "id",
+            "bank_name",
+            "account_name",
+            "account_number",
+            "routing_number",
+            "branch_name",
+            "swift_code",
+        ]
+
+
+class MobileBankingAgentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MobileBankingAgent
+        fields = ["id", "provider", "agent_number", "label"]
