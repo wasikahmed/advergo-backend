@@ -2,8 +2,8 @@ from rest_framework import serializers
 
 from .models import (
     Achievement,
-    Banner,
     BankAccount,
+    Banner,
     ClientLogo,
     CompanyInfo,
     GalleryItem,

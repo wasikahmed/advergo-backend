@@ -7,8 +7,8 @@ from apps.core.permissions import ReadOnlyOrAdmin
 from .filters import GalleryItemFilter
 from .models import (
     Achievement,
-    Banner,
     BankAccount,
+    Banner,
     ClientLogo,
     CompanyInfo,
     GalleryItem,

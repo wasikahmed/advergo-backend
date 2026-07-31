@@ -112,49 +112,65 @@ FABRICS = [
     {
         "name": "Pin Mesh Fabric",
         "grade": "China Premium",
-        "description": "Ultra-lightweight open-weave fabric for maximum airflow during high-intensity sport.",
+        "description": (
+            "Ultra-lightweight open-weave fabric for maximum airflow during high-intensity sport."
+        ),
         "image": "fabrics/pin-mesh-fabric.png",
     },
     {
         "name": "Sugar Mesh Fabric",
         "grade": "China Premium",
-        "description": "Soft textured mesh with superior moisture management and colour fastness.",
+        "description": (
+            "Soft textured mesh with superior moisture management and colour fastness."
+        ),
         "image": "fabrics/sugar-mesh-fabric.png",
     },
     {
         "name": "Brush Jacquard Fabric",
         "grade": "China Spandex",
-        "description": "Four-way stretch jacquard — aerodynamic fit with a premium textured surface.",
+        "description": (
+            "Four-way stretch jacquard — aerodynamic fit with a premium textured surface."
+        ),
         "image": "fabrics/brush-jacquard-fabric.png",
     },
     {
         "name": "Leaf Jacquard Fabric",
         "grade": "China Spandex",
-        "description": "Leaf-pattern jacquard weave combining stretch performance with a distinctive texture.",
+        "description": (
+            "Leaf-pattern jacquard weave combining stretch performance with a distinctive texture."
+        ),
         "image": "fabrics/leaf-jacquard-fabric.png",
     },
     {
         "name": "Honeycomb Fabric",
         "grade": "China Premium",
-        "description": "Structured honeycomb weave — durable, breathable, and professional in finish.",
+        "description": (
+            "Structured honeycomb weave — durable, breathable, and professional in finish."
+        ),
         "image": "fabrics/honeycomb-fabric.png",
     },
     {
         "name": "Birdseye Mesh Fabric",
         "grade": "China Premium",
-        "description": "Classic birdseye-weave mesh with fine ventilation holes for breathable everyday wear.",
+        "description": (
+            "Classic birdseye-weave mesh with fine ventilation holes for breathable everyday wear."
+        ),
         "image": "fabrics/birdseye-mesh-fabric.png",
     },
     {
         "name": "Nylon Spandex Fabric",
         "grade": "China Premium",
-        "description": "Lightweight nylon blend with elastic recovery — ideal for skin-tight performance kits.",
+        "description": (
+            "Lightweight nylon blend with elastic recovery — ideal for skin-tight performance kits."
+        ),
         "image": "fabrics/nylon-spandex-fabric.png",
     },
     {
         "name": "Lurex Box Mesh Fabric",
         "grade": "China Premium",
-        "description": "Shimmer-weave mesh combining style with ventilation for fashion-forward activewear.",
+        "description": (
+            "Shimmer-weave mesh combining style with ventilation for fashion-forward activewear."
+        ),
         "image": "fabrics/lurex-box-mesh-fabric.png",
     },
 ]
@@ -163,50 +179,108 @@ STEPS = [
     {
         "number": "01",
         "title": "Requirement Submission",
-        "description": "You share your design concepts, quantity, fabric preferences, and specifications with our team.",
+        "description": (
+            "You share your design concepts, quantity, fabric preferences, and specifications "
+            "with our team."
+        ),
         "emoji": "📋",
     },
     {
         "number": "02",
         "title": "Consultation & Quotation",
-        "description": "Our experts analyze your requirements, provide technical recommendations if needed, and offer a competitive price quotation.",
+        "description": (
+            "Our experts analyze your requirements, provide technical recommendations if "
+            "needed, and offer a competitive price quotation."
+        ),
         "emoji": "💬",
     },
     {
         "number": "03",
         "title": "Sampling",
-        "description": "Upon approval of the quotation, we develop a prototype sample for your review to ensure the design and quality meet your expectations.",
+        "description": (
+            "Upon approval of the quotation, we develop a prototype sample for your review to "
+            "ensure the design and quality meet your expectations."
+        ),
         "emoji": "🧵",
     },
     {
         "number": "04",
         "title": "Production",
-        "description": "Once the sample is approved, our skilled production team initiates large-scale manufacturing in our 6,000 SFT facility, maintaining strict quality control.",
+        "description": (
+            "Once the sample is approved, our skilled production team initiates large-scale "
+            "manufacturing in our 6,000 SFT facility, maintaining strict quality control."
+        ),
         "emoji": "⚙️",
     },
     {
         "number": "05",
         "title": "Quality Assurance & Packing",
-        "description": "Every garment undergoes a final inspection to ensure it meets our quality standards before being professionally packed.",
+        "description": (
+            "Every garment undergoes a final inspection to ensure it meets our quality "
+            "standards before being professionally packed."
+        ),
         "emoji": "🔍",
     },
     {
         "number": "06",
         "title": "Delivery",
-        "description": "We ensure prompt, secure delivery of your order, whether for local distribution or international export.",
+        "description": (
+            "We ensure prompt, secure delivery of your order, whether for local distribution "
+            "or international export."
+        ),
         "emoji": "🚚",
     },
 ]
 
 GALLERY = [
-    {"label": "Design Section", "category": "factory", "description": "Design & artwork studio", "image": "gallery/design-section.png"},
-    {"label": "Printing Section", "category": "factory", "description": "62-inch sublimation printing", "image": "gallery/printing-section.png"},
-    {"label": "Heat Press Section", "category": "factory", "description": "62-inch and 36-inch heat press finishing", "image": "gallery/heat-press-section.png"},
-    {"label": "Cutting Section", "category": "factory", "description": "Precision fabric cutting", "image": "gallery/cutting-section.png"},
-    {"label": "Sewing Section", "category": "factory", "description": "60-70 industrial sewing machines", "image": "gallery/sewing-section.png"},
-    {"label": "QC Section", "category": "factory", "description": "Quality inspection & standards", "image": "gallery/qc-section.png"},
-    {"label": "Iron Section", "category": "factory", "description": "Final pressing & finishing", "image": "gallery/iron-section.png"},
-    {"label": "Packing Section", "category": "factory", "description": "Professional packing & dispatch", "image": "gallery/packing-section.png"},
+    {
+        "label": "Design Section",
+        "category": "factory",
+        "description": "Design & artwork studio",
+        "image": "gallery/design-section.png",
+    },
+    {
+        "label": "Printing Section",
+        "category": "factory",
+        "description": "62-inch sublimation printing",
+        "image": "gallery/printing-section.png",
+    },
+    {
+        "label": "Heat Press Section",
+        "category": "factory",
+        "description": "62-inch and 36-inch heat press finishing",
+        "image": "gallery/heat-press-section.png",
+    },
+    {
+        "label": "Cutting Section",
+        "category": "factory",
+        "description": "Precision fabric cutting",
+        "image": "gallery/cutting-section.png",
+    },
+    {
+        "label": "Sewing Section",
+        "category": "factory",
+        "description": "60-70 industrial sewing machines",
+        "image": "gallery/sewing-section.png",
+    },
+    {
+        "label": "QC Section",
+        "category": "factory",
+        "description": "Quality inspection & standards",
+        "image": "gallery/qc-section.png",
+    },
+    {
+        "label": "Iron Section",
+        "category": "factory",
+        "description": "Final pressing & finishing",
+        "image": "gallery/iron-section.png",
+    },
+    {
+        "label": "Packing Section",
+        "category": "factory",
+        "description": "Professional packing & dispatch",
+        "image": "gallery/packing-section.png",
+    },
 ]
 
 TEAM = [
@@ -244,13 +318,29 @@ TEAM = [
     },
     {"name": "Sumon Ahmed", "role": "Merchandiser", "photo": "team/sumon-ahmed-merchandiser.png"},
     {"name": "Ruhul Amin", "role": "Sr. Designer", "photo": "team/ruhul-amin-sr-designer.png"},
-    {"name": "Jubaer Al Tawsin", "role": "Sr. Designer", "photo": "team/jubaer-al-tawsin-sr-designer.png"},
-    {"name": "Md Shahriar Alam", "role": "Sr. Designer", "photo": "team/md-shahriar-alam-sr-designer.png"},
+    {
+        "name": "Jubaer Al Tawsin",
+        "role": "Sr. Designer",
+        "photo": "team/jubaer-al-tawsin-sr-designer.png",
+    },
+    {
+        "name": "Md Shahriar Alam",
+        "role": "Sr. Designer",
+        "photo": "team/md-shahriar-alam-sr-designer.png",
+    },
     {"name": "Fazle Rabbi", "role": "Designer", "photo": "team/fazle-rabbi-designer.png"},
     {"name": "Md Sajed Ali", "role": "Designer", "photo": "team/md-sajed-ali-designer.png"},
     {"name": "Maruf Hossain", "role": "Designer", "photo": "team/maruf-hossain-designer.png"},
-    {"name": "Md Didarul Alam", "role": "Accounts & Admin", "photo": "team/md-didarul-alam-accounts-admin.png"},
-    {"name": "Muhammad Ullah", "role": "Marketing Executive", "photo": "team/muhammad-ullah-marketing-executive.png"},
+    {
+        "name": "Md Didarul Alam",
+        "role": "Accounts & Admin",
+        "photo": "team/md-didarul-alam-accounts-admin.png",
+    },
+    {
+        "name": "Muhammad Ullah",
+        "role": "Marketing Executive",
+        "photo": "team/muhammad-ullah-marketing-executive.png",
+    },
     {"name": "Rasel", "role": "Office Assistant", "photo": "team/rasel-office-assistant.png"},
 ]
 
@@ -305,7 +395,10 @@ def _attach_image(instance, field_name, relative_path):
 
 
 class Command(BaseCommand):
-    help = "Seeds real content extracted from Advergo Business Profile-2026.pdf, and removes fabricated demo content."
+    help = (
+        "Seeds real content extracted from Advergo Business Profile-2026.pdf, and removes "
+        "fabricated demo content."
+    )
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -319,7 +412,9 @@ class Command(BaseCommand):
         self.stdout.write(f"  stats: {len(STATS)}")
 
         for order, row in enumerate(ACHIEVEMENTS):
-            Achievement.objects.update_or_create(title=row["title"], defaults={**row, "order": order})
+            Achievement.objects.update_or_create(
+                title=row["title"], defaults={**row, "order": order}
+            )
         # Drop stale demo titles that don't exactly match (e.g. "Certificate of Inc.").
         Achievement.objects.exclude(title__in=[r["title"] for r in ACHIEVEMENTS]).delete()
         self.stdout.write(f"  achievements: {len(ACHIEVEMENTS)}")
@@ -327,13 +422,17 @@ class Command(BaseCommand):
         for order, row in enumerate(FABRICS):
             row = dict(row)
             image_path = row.pop("image", None)
-            obj, _ = Fabric.objects.update_or_create(name=row["name"], defaults={**row, "order": order})
+            obj, _ = Fabric.objects.update_or_create(
+                name=row["name"], defaults={**row, "order": order}
+            )
             if image_path:
                 _attach_image(obj, "image", image_path)
         self.stdout.write(f"  fabrics: {len(FABRICS)}")
 
         for order, row in enumerate(STEPS):
-            ProcessStep.objects.update_or_create(number=row["number"], defaults={**row, "order": order})
+            ProcessStep.objects.update_or_create(
+                number=row["number"], defaults={**row, "order": order}
+            )
         self.stdout.write(f"  process steps: {len(STEPS)}")
 
         # Full replace, not update_or_create-by-label -- seed_demo_data's demo rows
@@ -353,7 +452,9 @@ class Command(BaseCommand):
         for order, row in enumerate(TEAM):
             row = dict(row)
             photo_path = row.pop("photo", None)
-            obj, _ = TeamMember.objects.update_or_create(name=row["name"], defaults={**row, "order": order})
+            obj, _ = TeamMember.objects.update_or_create(
+                name=row["name"], defaults={**row, "order": order}
+            )
             if photo_path:
                 _attach_image(obj, "photo", photo_path)
         self.stdout.write(f"  team members: {len(TEAM)}")

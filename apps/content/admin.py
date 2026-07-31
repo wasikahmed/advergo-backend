@@ -4,8 +4,8 @@ from unfold.admin import ModelAdmin
 
 from .models import (
     Achievement,
-    Banner,
     BankAccount,
+    Banner,
     ClientLogo,
     CompanyInfo,
     GalleryItem,
