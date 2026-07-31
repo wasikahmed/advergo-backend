@@ -2,6 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.templatetags.static import static
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -119,6 +120,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Admin branding assets (logo/icon/favicon) live here, outside any app.
+STATICFILES_DIRS = [BASE_DIR / "static"]
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     # Plain storage -- no build-time compression/manifest post_process step.
@@ -247,9 +250,42 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20 MB, matches quote-form spec
 FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
 
 # --- Unfold (admin theme) ---------------------------------------------------
+# Branding assets live in static/branding/ (cropped from the frontend's own
+# logo-header.png so the admin matches the storefront instead of Unfold's
+# default look).
 UNFOLD = {
     "SITE_TITLE": "Advergo Admin",
     "SITE_HEADER": "Advergo Sports & Fashion Wear Ltd.",
+    "SITE_LOGO": {
+        "light": lambda request: static("branding/logo.png"),
+        "dark": lambda request: static("branding/logo-dark.png"),
+    },
+    "SITE_ICON": lambda request: static("branding/icon.png"),
+    "SITE_FAVICONS": [
+        {
+            "rel": "icon",
+            "sizes": "180x180",
+            "type": "image/png",
+            "href": lambda request: static("branding/favicon.png"),
+        },
+    ],
+    # Swap Unfold's default violet accent for the storefront's brand red
+    # (same hex values as --color-brand-red/-dark/-deep in the frontend).
+    "COLORS": {
+        "primary": {
+            "50": "#fdf2f2",
+            "100": "#fbdfe0",
+            "200": "#f5b8ba",
+            "300": "#ee8b8e",
+            "400": "#e35a5f",
+            "500": "#c8262c",
+            "600": "#a91218",
+            "700": "#8a0f14",
+            "800": "#6b0c10",
+            "900": "#4a0a0d",
+            "950": "#2e0608",
+        },
+    },
 }
 
 LOGGING = {
