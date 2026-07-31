@@ -5,15 +5,29 @@ from rest_framework.response import Response
 from apps.core.permissions import ReadOnlyOrAdmin
 
 from .filters import GalleryItemFilter
-from .models import Achievement, Banner, ClientLogo, CompanyInfo, GalleryItem, ProcessStep, Stat
+from .models import (
+    Achievement,
+    Banner,
+    BankAccount,
+    ClientLogo,
+    CompanyInfo,
+    GalleryItem,
+    MobileBankingAgent,
+    ProcessStep,
+    Stat,
+    TeamMember,
+)
 from .serializers import (
     AchievementSerializer,
+    BankAccountSerializer,
     BannerSerializer,
     ClientLogoSerializer,
     CompanyInfoSerializer,
     GalleryItemSerializer,
+    MobileBankingAgentSerializer,
     ProcessStepSerializer,
     StatSerializer,
+    TeamMemberSerializer,
 )
 
 
@@ -64,6 +78,27 @@ class GalleryItemViewSet(viewsets.ModelViewSet):
     serializer_class = GalleryItemSerializer
     permission_classes = [ReadOnlyOrAdmin]
     filterset_class = GalleryItemFilter
+    pagination_class = None
+
+
+class TeamMemberViewSet(viewsets.ModelViewSet):
+    queryset = TeamMember.objects.all()
+    serializer_class = TeamMemberSerializer
+    permission_classes = [ReadOnlyOrAdmin]
+    pagination_class = None
+
+
+class BankAccountViewSet(viewsets.ModelViewSet):
+    queryset = BankAccount.objects.all()
+    serializer_class = BankAccountSerializer
+    permission_classes = [ReadOnlyOrAdmin]
+    pagination_class = None
+
+
+class MobileBankingAgentViewSet(viewsets.ModelViewSet):
+    queryset = MobileBankingAgent.objects.all()
+    serializer_class = MobileBankingAgentSerializer
+    permission_classes = [ReadOnlyOrAdmin]
     pagination_class = None
 
 

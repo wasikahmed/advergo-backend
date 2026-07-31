@@ -3,12 +3,15 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     AchievementViewSet,
+    BankAccountViewSet,
     BannerViewSet,
     ClientLogoViewSet,
     CompanyInfoView,
     GalleryItemViewSet,
+    MobileBankingAgentViewSet,
     ProcessStepViewSet,
     StatViewSet,
+    TeamMemberViewSet,
 )
 
 router = DefaultRouter()
@@ -18,6 +21,9 @@ router.register("achievements", AchievementViewSet, basename="achievement")
 router.register("clients", ClientLogoViewSet, basename="client-logo")
 router.register("steps", ProcessStepViewSet, basename="process-step")
 router.register("gallery", GalleryItemViewSet, basename="gallery-item")
+router.register("team", TeamMemberViewSet, basename="team-member")
+router.register("bank-accounts", BankAccountViewSet, basename="bank-account")
+router.register("mobile-banking", MobileBankingAgentViewSet, basename="mobile-banking-agent")
 
 urlpatterns = [
     path("company/", CompanyInfoView.as_view(), name="company-info"),

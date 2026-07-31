@@ -2,7 +2,19 @@ from django import forms
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
-from .models import Achievement, Banner, ClientLogo, CompanyInfo, GalleryItem, ProcessStep, Stat
+from .models import (
+    Achievement,
+    Banner,
+    BankAccount,
+    ClientLogo,
+    CompanyInfo,
+    GalleryItem,
+    MobileBankingAgent,
+    OfficialDocument,
+    ProcessStep,
+    Stat,
+    TeamMember,
+)
 
 
 class BannerForm(forms.ModelForm):
@@ -44,9 +56,38 @@ class AchievementAdmin(ModelAdmin):
 
 @admin.register(ClientLogo)
 class ClientLogoAdmin(ModelAdmin):
-    list_display = ["name", "logo_url", "order"]
+    list_display = ["name", "logo_image", "logo_url", "order"]
     search_fields = ["name"]
     ordering = ["order", "name"]
+
+
+@admin.register(TeamMember)
+class TeamMemberAdmin(ModelAdmin):
+    list_display = ["name", "role", "is_leadership", "order"]
+    list_filter = ["is_leadership"]
+    search_fields = ["name", "role"]
+    ordering = ["order", "name"]
+
+
+@admin.register(BankAccount)
+class BankAccountAdmin(ModelAdmin):
+    list_display = ["bank_name", "account_number", "swift_code", "order"]
+    search_fields = ["bank_name", "account_number"]
+    ordering = ["order", "bank_name"]
+
+
+@admin.register(MobileBankingAgent)
+class MobileBankingAgentAdmin(ModelAdmin):
+    list_display = ["provider", "agent_number", "label", "order"]
+    ordering = ["order", "provider"]
+
+
+@admin.register(OfficialDocument)
+class OfficialDocumentAdmin(ModelAdmin):
+    """Staff-login-gated by Django admin; deliberately no public API for this model."""
+
+    list_display = ["doc_type", "reference_number", "issue_date"]
+    ordering = ["doc_type"]
 
 
 @admin.register(ProcessStep)
