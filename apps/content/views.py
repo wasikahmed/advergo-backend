@@ -11,6 +11,7 @@ from .models import (
     Banner,
     ClientLogo,
     CompanyInfo,
+    GalleryCategory,
     GalleryItem,
     MobileBankingAgent,
     ProcessStep,
@@ -23,6 +24,7 @@ from .serializers import (
     BannerSerializer,
     ClientLogoSerializer,
     CompanyInfoSerializer,
+    GalleryCategorySerializer,
     GalleryItemSerializer,
     MobileBankingAgentSerializer,
     ProcessStepSerializer,
@@ -71,8 +73,15 @@ class ProcessStepViewSet(viewsets.ModelViewSet):
     pagination_class = None
 
 
+class GalleryCategoryViewSet(viewsets.ModelViewSet):
+    queryset = GalleryCategory.objects.all()
+    serializer_class = GalleryCategorySerializer
+    permission_classes = [ReadOnlyOrAdmin]
+    pagination_class = None
+
+
 class GalleryItemViewSet(viewsets.ModelViewSet):
-    queryset = GalleryItem.objects.all()
+    queryset = GalleryItem.objects.select_related("category").all()
     serializer_class = GalleryItemSerializer
     permission_classes = [ReadOnlyOrAdmin]
     filterset_class = GalleryItemFilter

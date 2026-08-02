@@ -4,7 +4,7 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.catalog.models import SportCategory
+from apps.catalog.models import Category
 from apps.pricing.models import CategoryPriceRule
 
 pytestmark = pytest.mark.django_db
@@ -34,7 +34,7 @@ def test_estimate_works_with_only_quantity(api_client):
 
 
 def test_estimate_uses_category_slug(api_client):
-    category = SportCategory.objects.create(slug="football", name="Football")
+    category = Category.objects.create(slug="football", name="Football")
     CategoryPriceRule.objects.create(category=category, price_per_unit=Decimal("500.00"))
 
     response = api_client.post(

@@ -3,18 +3,18 @@ from rest_framework import viewsets
 from apps.core.permissions import ReadOnlyOrAdmin
 
 from .filters import ProductFilter, SizeChartRowFilter
-from .models import Fabric, Product, SizeChartRow, SportCategory
+from .models import Category, Fabric, Product, SizeChartRow
 from .serializers import (
+    CategorySerializer,
     FabricSerializer,
     ProductSerializer,
     SizeChartRowSerializer,
-    SportCategorySerializer,
 )
 
 
-class SportCategoryViewSet(viewsets.ModelViewSet):
-    queryset = SportCategory.objects.all()
-    serializer_class = SportCategorySerializer
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
     permission_classes = [ReadOnlyOrAdmin]
     pagination_class = None
 

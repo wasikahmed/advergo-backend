@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from apps.catalog.models import Fabric, Product, SportCategory
+from apps.catalog.models import Category, Fabric, Product
 from apps.core.models import TimeStampedModel
 from apps.core.storage import get_raw_file_storage
 from apps.core.validators import validate_design_file
@@ -37,7 +37,7 @@ class QuoteRequest(TimeStampedModel):
     email = models.EmailField(blank=True)
 
     category = models.ForeignKey(
-        SportCategory,
+        Category,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

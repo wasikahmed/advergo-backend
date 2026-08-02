@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.catalog.models import Fabric, SportCategory
+from apps.catalog.models import Category, Fabric
 from apps.core.models import TimeStampedModel
 
 
@@ -17,9 +17,7 @@ class FabricPriceRule(TimeStampedModel):
 class CategoryPriceRule(TimeStampedModel):
     """Fallback base per-piece price used when a quote doesn't specify a fabric."""
 
-    category = models.OneToOneField(
-        SportCategory, on_delete=models.CASCADE, related_name="price_rule"
-    )
+    category = models.OneToOneField(Category, on_delete=models.CASCADE, related_name="price_rule")
     price_per_unit = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):

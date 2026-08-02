@@ -1,12 +1,13 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.catalog.models import Fabric, Product, SportCategory
+from apps.catalog.models import Category, Fabric, Product
 from apps.content.models import (
     Achievement,
     Banner,
     ClientLogo,
     CompanyInfo,
+    GalleryCategory,
     GalleryItem,
     ProcessStep,
     Stat,
@@ -242,6 +243,11 @@ STEPS = [
     },
 ]
 
+GALLERY_CATEGORIES = [
+    {"slug": "factory", "name": "Factory", "icon": "🏭"},
+    {"slug": "clients", "name": "Clients", "icon": "🤝"},
+]
+
 GALLERY = [
     {"label": "Design section", "category": "factory", "description": "Design & artwork studio"},
     {
@@ -351,7 +357,7 @@ class Command(BaseCommand):
         categories = {}
         for row in CATEGORIES:
             slug = row.pop("slug")
-            obj, _ = SportCategory.objects.update_or_create(slug=slug, defaults=row)
+            obj, _ = Category.objects.update_or_create(slug=slug, defaults=row)
             categories[slug] = obj
         self.stdout.write(f"  categories: {len(categories)}")
 
@@ -387,10 +393,18 @@ class Command(BaseCommand):
             )
         self.stdout.write(f"  process steps: {len(STEPS)}")
 
-        for order, row in enumerate(GALLERY):
-            GalleryItem.objects.update_or_create(
-                label=row["label"], defaults={**row, "order": order}
+        gallery_categories = {}
+        for order, row in enumerate(GALLERY_CATEGORIES):
+            slug = row["slug"]
+            obj, _ = GalleryCategory.objects.update_or_create(
+                slug=slug, defaults={"name": row["name"], "icon": row["icon"], "order": order}
             )
+            gallery_categories[slug] = obj
+        self.stdout.write(f"  gallery categories: {len(gallery_categories)}")
+
+        for order, row in enumerate(GALLERY):
+            defaults = {**row, "order": order, "category": gallery_categories[row["category"]]}
+            GalleryItem.objects.update_or_create(label=row["label"], defaults=defaults)
         self.stdout.write(f"  gallery items: {len(GALLERY)}")
 
         for row in REVIEWS:

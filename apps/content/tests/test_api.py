@@ -5,7 +5,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.content.models import Banner, CompanyInfo, GalleryItem
+from apps.content.models import Banner, CompanyInfo, GalleryCategory, GalleryItem
 
 pytestmark = pytest.mark.django_db
 
@@ -41,8 +41,10 @@ def test_active_banner_orders_by_priority(api_client):
 
 
 def test_gallery_filter_by_category(api_client):
-    GalleryItem.objects.create(label="Sewing", category="factory")
-    GalleryItem.objects.create(label="Delivery", category="clients")
+    factory, _ = GalleryCategory.objects.get_or_create(slug="factory", defaults={"name": "Factory"})
+    clients, _ = GalleryCategory.objects.get_or_create(slug="clients", defaults={"name": "Clients"})
+    GalleryItem.objects.create(label="Sewing", category=factory)
+    GalleryItem.objects.create(label="Delivery", category=clients)
 
     response = api_client.get("/api/v1/content/gallery/", {"category": "factory"})
     labels = {item["label"] for item in response.data}
@@ -50,7 +52,8 @@ def test_gallery_filter_by_category(api_client):
 
 
 def test_gallery_item_exposes_src_not_image(api_client):
-    GalleryItem.objects.create(label="Sewing", category="factory")
+    factory, _ = GalleryCategory.objects.get_or_create(slug="factory", defaults={"name": "Factory"})
+    GalleryItem.objects.create(label="Sewing", category=factory)
     response = api_client.get("/api/v1/content/gallery/")
     assert "src" in response.data[0]
     assert "image" not in response.data[0]

@@ -2,7 +2,7 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.catalog.models import Product, SportCategory
+from apps.catalog.models import Category, Product
 from apps.users.tests.factories import UserFactory
 from apps.wishlist.models import WishlistItem
 
@@ -21,7 +21,7 @@ def login(api_client, email, password="Str0ngPassw0rd!"):
 
 @pytest.fixture
 def product():
-    category = SportCategory.objects.create(slug="football", name="Football")
+    category = Category.objects.create(slug="football", name="Football")
     return Product.objects.create(name="Tournament Jersey", category=category)
 
 

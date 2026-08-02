@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.catalog.models import Fabric, SportCategory
+from apps.catalog.models import Category, Fabric
 
 
 class PriceEstimateRequestSerializer(serializers.Serializer):
@@ -8,7 +8,7 @@ class PriceEstimateRequestSerializer(serializers.Serializer):
         queryset=Fabric.objects.all(), required=False, allow_null=True
     )
     category = serializers.SlugRelatedField(
-        slug_field="slug", queryset=SportCategory.objects.all(), required=False, allow_null=True
+        slug_field="slug", queryset=Category.objects.all(), required=False, allow_null=True
     )
     quantity = serializers.IntegerField(min_value=1)
 

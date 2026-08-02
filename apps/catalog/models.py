@@ -3,9 +3,9 @@ from django.db import models
 from apps.core.models import SoftDeleteModel, TimeStampedModel
 
 
-class SportCategory(TimeStampedModel):
-    """Fixed-ish set (football, cricket, cycling, marathon, corporate...) but kept as
-    data, not an enum, so new categories can be added from the admin without a deploy."""
+class Category(TimeStampedModel):
+    """Product category (football, cricket, corporate wear, etc.), kept as data,
+    not an enum, so new categories can be added from the admin without a deploy."""
 
     slug = models.SlugField(primary_key=True, max_length=40)
     name = models.CharField(max_length=80)
@@ -14,7 +14,7 @@ class SportCategory(TimeStampedModel):
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        verbose_name_plural = "sport categories"
+        verbose_name_plural = "categories"
         ordering = ["order", "name"]
 
     def __str__(self):
@@ -42,7 +42,7 @@ class SizeChartRow(TimeStampedModel):
     set it to give a category its own chart (e.g. corporate polo vs. jersey fit)."""
 
     category = models.ForeignKey(
-        SportCategory,
+        Category,
         null=True,
         blank=True,
         on_delete=models.CASCADE,
@@ -74,7 +74,7 @@ class SizeChartRow(TimeStampedModel):
 
 class Product(TimeStampedModel, SoftDeleteModel):
     name = models.CharField(max_length=150)
-    category = models.ForeignKey(SportCategory, on_delete=models.PROTECT, related_name="products")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
     price_range = models.CharField(max_length=60, blank=True)
     fabric = models.CharField(
         max_length=150, blank=True, help_text="Free-text fabric label shown on the card."

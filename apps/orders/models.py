@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 
-from apps.catalog.models import Fabric, Product, SportCategory
+from apps.catalog.models import Category, Fabric, Product
 from apps.core.models import TimeStampedModel
 from apps.quotes.models import QuoteRequest
 
@@ -42,7 +42,7 @@ class Order(TimeStampedModel):
     email = models.EmailField(blank=True)
 
     category = models.ForeignKey(
-        SportCategory, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders"
+        Category, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders"
     )
     product = models.ForeignKey(
         Product, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders"

@@ -106,15 +106,29 @@ class ProcessStep(TimeStampedModel):
         return f"{self.number} · {self.title}"
 
 
-class GalleryCategory(models.TextChoices):
-    FACTORY = "factory", "Factory"
-    CLIENTS = "clients", "Clients"
+class GalleryCategory(TimeStampedModel):
+    """Gallery photo category (factory, clients, ...), kept as data, not an
+    enum, so new categories can be added from the admin without a deploy."""
+
+    slug = models.SlugField(primary_key=True, max_length=40)
+    name = models.CharField(max_length=80)
+    icon = models.CharField(max_length=8, blank=True, help_text="Emoji shown in the UI.")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name_plural = "gallery categories"
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
 
 
 class GalleryItem(TimeStampedModel):
     image = models.ImageField(upload_to="gallery/", blank=True, null=True)
     label = models.CharField(max_length=120)
-    category = models.CharField(max_length=10, choices=GalleryCategory.choices)
+    category = models.ForeignKey(
+        GalleryCategory, on_delete=models.PROTECT, related_name="gallery_items"
+    )
     description = models.CharField(max_length=200, blank=True)
     order = models.PositiveIntegerField(default=0)
 

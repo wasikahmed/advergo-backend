@@ -3,7 +3,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.catalog.models import Fabric, SportCategory
+from apps.catalog.models import Category, Fabric
 from apps.quotes.models import QuoteRequest, QuoteRequestStatus
 from apps.users.tests.factories import UserFactory
 
@@ -17,7 +17,7 @@ def api_client():
 
 @pytest.fixture
 def category():
-    return SportCategory.objects.create(slug="football", name="Football")
+    return Category.objects.create(slug="football", name="Football")
 
 
 @pytest.fixture

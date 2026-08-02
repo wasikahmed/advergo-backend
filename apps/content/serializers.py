@@ -6,6 +6,7 @@ from .models import (
     Banner,
     ClientLogo,
     CompanyInfo,
+    GalleryCategory,
     GalleryItem,
     MobileBankingAgent,
     ProcessStep,
@@ -54,12 +55,25 @@ class ProcessStepSerializer(serializers.ModelSerializer):
         fields = ["id", "number", "title", "description", "emoji"]
 
 
+class GalleryCategorySerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source="slug")
+
+    class Meta:
+        model = GalleryCategory
+        fields = ["id", "name", "icon"]
+
+
 class GalleryItemSerializer(serializers.ModelSerializer):
     src = serializers.ImageField(source="image", use_url=True, required=False, allow_null=True)
+    # Kept as the category's slug (not a display name) since these are the
+    # same "factory"/"clients" values the field already held pre-FK, so no
+    # frontend change is required to keep reading/filtering by this field.
+    category = serializers.CharField(source="category.slug", read_only=True)
+    category_name = serializers.CharField(source="category.name", read_only=True)
 
     class Meta:
         model = GalleryItem
-        fields = ["id", "src", "label", "category", "description"]
+        fields = ["id", "src", "label", "category", "category_name", "description"]
 
 
 class CompanyInfoSerializer(serializers.ModelSerializer):

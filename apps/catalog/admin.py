@@ -1,11 +1,11 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
-from .models import Fabric, Product, SizeChartRow, SportCategory
+from .models import Category, Fabric, Product, SizeChartRow
 
 
-@admin.register(SportCategory)
-class SportCategoryAdmin(ModelAdmin):
+@admin.register(Category)
+class CategoryAdmin(ModelAdmin):
     list_display = ["name", "slug", "icon", "order"]
     ordering = ["order", "name"]
     search_fields = ["name", "slug"]

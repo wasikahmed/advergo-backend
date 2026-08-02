@@ -8,6 +8,7 @@ from .models import (
     Banner,
     ClientLogo,
     CompanyInfo,
+    GalleryCategory,
     GalleryItem,
     MobileBankingAgent,
     OfficialDocument,
@@ -96,12 +97,20 @@ class ProcessStepAdmin(ModelAdmin):
     ordering = ["order"]
 
 
+@admin.register(GalleryCategory)
+class GalleryCategoryAdmin(ModelAdmin):
+    list_display = ["name", "slug", "icon", "order"]
+    ordering = ["order", "name"]
+    search_fields = ["name", "slug"]
+
+
 @admin.register(GalleryItem)
 class GalleryItemAdmin(ModelAdmin):
     list_display = ["label", "category", "order"]
     list_filter = ["category"]
     search_fields = ["label", "description"]
     ordering = ["order"]
+    autocomplete_fields = ["category"]
 
 
 @admin.register(CompanyInfo)

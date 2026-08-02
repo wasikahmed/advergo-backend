@@ -7,6 +7,7 @@ from .views import (
     BannerViewSet,
     ClientLogoViewSet,
     CompanyInfoView,
+    GalleryCategoryViewSet,
     GalleryItemViewSet,
     MobileBankingAgentViewSet,
     ProcessStepViewSet,
@@ -20,6 +21,7 @@ router.register("stats", StatViewSet, basename="stat")
 router.register("achievements", AchievementViewSet, basename="achievement")
 router.register("clients", ClientLogoViewSet, basename="client-logo")
 router.register("steps", ProcessStepViewSet, basename="process-step")
+router.register("gallery-categories", GalleryCategoryViewSet, basename="gallery-category")
 router.register("gallery", GalleryItemViewSet, basename="gallery-item")
 router.register("team", TeamMemberViewSet, basename="team-member")
 router.register("bank-accounts", BankAccountViewSet, basename="bank-account")

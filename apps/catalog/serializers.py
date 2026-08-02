@@ -1,13 +1,13 @@
 from rest_framework import serializers
 
-from .models import Fabric, Product, SizeChartRow, SportCategory
+from .models import Category, Fabric, Product, SizeChartRow
 
 
-class SportCategorySerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="slug")
 
     class Meta:
-        model = SportCategory
+        model = Category
         fields = ["id", "name", "icon", "description"]
 
 

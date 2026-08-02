@@ -2,7 +2,7 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.catalog.models import Fabric, Product, SportCategory
+from apps.catalog.models import Category, Fabric, Product
 
 pytestmark = pytest.mark.django_db
 
@@ -14,12 +14,12 @@ def api_client():
 
 @pytest.fixture
 def football():
-    return SportCategory.objects.create(slug="football", name="Football", icon="⚽")
+    return Category.objects.create(slug="football", name="Football", icon="⚽")
 
 
 @pytest.fixture
 def cricket():
-    return SportCategory.objects.create(slug="cricket", name="Cricket", icon="🏏")
+    return Category.objects.create(slug="cricket", name="Cricket", icon="🏏")
 
 
 def test_list_categories(api_client, football, cricket):

@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from apps.catalog.models import Fabric, SportCategory
+from apps.catalog.models import Category, Fabric
 from apps.pricing.models import CategoryPriceRule, FabricPriceRule, QuantityDiscountTier
 from apps.pricing.services import DEFAULT_BASE_PRICE, estimate_price
 
@@ -16,7 +16,7 @@ def test_falls_back_to_default_price_when_no_rules_exist():
 
 
 def test_fabric_rule_takes_priority_over_category_rule():
-    category = SportCategory.objects.create(slug="football", name="Football")
+    category = Category.objects.create(slug="football", name="Football")
     fabric = Fabric.objects.create(name="Pin Mesh")
     CategoryPriceRule.objects.create(category=category, price_per_unit=Decimal("500.00"))
     FabricPriceRule.objects.create(fabric=fabric, price_per_unit=Decimal("700.00"))
@@ -27,7 +27,7 @@ def test_fabric_rule_takes_priority_over_category_rule():
 
 
 def test_category_rule_used_when_no_fabric_given():
-    category = SportCategory.objects.create(slug="cricket", name="Cricket")
+    category = Category.objects.create(slug="cricket", name="Cricket")
     CategoryPriceRule.objects.create(category=category, price_per_unit=Decimal("600.00"))
 
     estimate = estimate_price(fabric=None, category=category, quantity=10)
@@ -35,7 +35,7 @@ def test_category_rule_used_when_no_fabric_given():
 
 
 def test_quantity_discount_reduces_unit_price():
-    category = SportCategory.objects.create(slug="corporate", name="Corporate")
+    category = Category.objects.create(slug="corporate", name="Corporate")
     CategoryPriceRule.objects.create(category=category, price_per_unit=Decimal("1000.00"))
     QuantityDiscountTier.objects.create(min_quantity=100, discount_percent=Decimal("10.0"))
 
