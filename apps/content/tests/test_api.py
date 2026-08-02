@@ -23,21 +23,21 @@ def test_active_banner_respects_date_range(api_client):
 
     response = api_client.get("/api/v1/content/banners/active/")
     assert response.status_code == status.HTTP_200_OK
-    assert response.data["title"] == live.title
+    assert [b["title"] for b in response.data] == [live.title]
 
 
-def test_active_banner_returns_null_when_none_active(api_client):
+def test_active_banner_returns_empty_list_when_none_active(api_client):
     response = api_client.get("/api/v1/content/banners/active/")
     assert response.status_code == status.HTTP_200_OK
-    assert response.data is None
+    assert response.data == []
 
 
-def test_active_banner_picks_highest_priority(api_client):
+def test_active_banner_orders_by_priority(api_client):
     Banner.objects.create(title="Low", is_active=True, priority=1)
     Banner.objects.create(title="High", is_active=True, priority=9)
 
     response = api_client.get("/api/v1/content/banners/active/")
-    assert response.data["title"] == "High"
+    assert [b["title"] for b in response.data] == ["High", "Low"]
 
 
 def test_gallery_filter_by_category(api_client):
