@@ -39,10 +39,8 @@ class BannerViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def active(self, request):
-        banner = Banner.objects.active().first()
-        if banner is None:
-            return Response(None)
-        return Response(self.get_serializer(banner).data)
+        banners = Banner.objects.active()
+        return Response(self.get_serializer(banners, many=True).data)
 
 
 class StatViewSet(viewsets.ModelViewSet):
