@@ -59,8 +59,14 @@ class Stat(TimeStampedModel):
         return f"{self.value} {self.label}"
 
 
+class AchievementKind(models.TextChoices):
+    DOCUMENT = "document", "Legal document"
+    AWARD = "award", "Award"
+
+
 class Achievement(TimeStampedModel):
-    icon = models.CharField(max_length=8, blank=True, help_text="Emoji shown in the UI.")
+    kind = models.CharField(max_length=10, choices=AchievementKind.choices)
+    image = models.ImageField(upload_to="achievements/", blank=True, null=True)
     title = models.CharField(max_length=120)
     year = models.CharField(max_length=10, blank=True)
     issuing_body = models.CharField(max_length=200, blank=True)

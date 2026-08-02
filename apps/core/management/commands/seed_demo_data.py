@@ -4,6 +4,7 @@ from django.db import transaction
 from apps.catalog.models import Category, Fabric, Product
 from apps.content.models import (
     Achievement,
+    AchievementKind,
     Banner,
     ClientLogo,
     CompanyInfo,
@@ -144,25 +145,25 @@ STATS = [
 
 ACHIEVEMENTS = [
     {
-        "icon": "🏛️",
+        "kind": AchievementKind.DOCUMENT,
         "title": "Trade License",
         "year": "2022",
         "issuing_body": "TRAD/DNCC/027440/2022",
     },
     {
-        "icon": "📜",
+        "kind": AchievementKind.DOCUMENT,
         "title": "TIN Certificate",
         "year": "2021",
         "issuing_body": "National Board of Revenue",
     },
     {
-        "icon": "✅",
+        "kind": AchievementKind.DOCUMENT,
         "title": "BIN VAT Certificate",
         "year": "2019",
         "issuing_body": "Customs, Excise & VAT — Dhaka North",
     },
     {
-        "icon": "🏢",
+        "kind": AchievementKind.DOCUMENT,
         "title": "Certificate of Inc.",
         "year": "2021",
         "issuing_body": "Registrar of Joint Stock Companies",

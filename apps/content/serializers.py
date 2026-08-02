@@ -30,9 +30,11 @@ class StatSerializer(serializers.ModelSerializer):
 
 
 class AchievementSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True, required=False, allow_null=True)
+
     class Meta:
         model = Achievement
-        fields = ["id", "icon", "title", "year", "issuing_body"]
+        fields = ["id", "kind", "image", "title", "year", "issuing_body"]
 
 
 class ClientLogoSerializer(serializers.ModelSerializer):

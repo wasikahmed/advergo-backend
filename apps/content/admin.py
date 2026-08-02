@@ -51,7 +51,8 @@ class StatAdmin(ModelAdmin):
 
 @admin.register(Achievement)
 class AchievementAdmin(ModelAdmin):
-    list_display = ["title", "year", "issuing_body", "order"]
+    list_display = ["title", "kind", "year", "issuing_body", "order"]
+    list_filter = ["kind"]
     ordering = ["order"]
 
 
