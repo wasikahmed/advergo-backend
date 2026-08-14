@@ -10,6 +10,7 @@ venv/
 !.env.prod.example
 db.sqlite3
 dev_check.sqlite3
+backend-server.log
 /staticfiles/
 /media/*
 !/media/.gitkeep
