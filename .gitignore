@@ -9,6 +9,7 @@ venv/
 !.env.example
 !.env.prod.example
 db.sqlite3
+dev_check.sqlite3
 /staticfiles/
 /media/*
 !/media/.gitkeep
