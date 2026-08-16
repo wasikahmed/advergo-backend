@@ -63,6 +63,9 @@ class QuoteRequest(TimeStampedModel):
     size_breakdown = models.CharField(
         max_length=300, blank=True, help_text="e.g. 5xS, 10xM, 8xL, 2xXL"
     )
+    delivery_address = models.TextField(
+        blank=True, help_text="Where the finished order should be delivered."
+    )
     design_file = models.FileField(
         upload_to="advergo/quotes/",
         blank=True,

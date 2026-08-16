@@ -33,6 +33,7 @@ class QuoteRequestAdmin(ModelAdmin):
         "fabric",
         "quantity",
         "size_breakdown",
+        "delivery_address",
         "design_file",
         "notes",
         "estimated_price_low",

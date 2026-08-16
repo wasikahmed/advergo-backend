@@ -56,6 +56,9 @@ class Order(TimeStampedModel):
 
     total_quantity = models.PositiveIntegerField()
     size_breakdown = models.CharField(max_length=300, blank=True)
+    delivery_address = models.TextField(
+        blank=True, help_text="Where the finished order should be delivered."
+    )
 
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_value = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)

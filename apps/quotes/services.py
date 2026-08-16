@@ -22,6 +22,7 @@ def convert_quote_to_order(quote, created_by):
         design=quote.design,
         total_quantity=quote.quantity,
         size_breakdown=quote.size_breakdown,
+        delivery_address=quote.delivery_address,
         created_by=created_by,
     )
     quote.status = QuoteRequestStatus.CONVERTED

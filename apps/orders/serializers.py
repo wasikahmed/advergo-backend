@@ -46,6 +46,7 @@ class OrderFullSerializer(serializers.ModelSerializer):
             "design_code",
             "total_quantity",
             "size_breakdown",
+            "delivery_address",
             "unit_price",
             "total_value",
             "advance_paid",
@@ -88,6 +89,7 @@ class OrderLimitedSerializer(serializers.ModelSerializer):
             "design_code",
             "total_quantity",
             "size_breakdown",
+            "delivery_address",
             "status",
             "created_at",
         ]
