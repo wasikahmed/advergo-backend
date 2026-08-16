@@ -230,7 +230,7 @@ def test_admin_can_invite_and_invitee_can_accept(api_client):
         {"token": invite.token, "fullName": "New Staffer", "password": "Str0ngPassw0rd!"},
     )
     assert accept_response.status_code == status.HTTP_201_CREATED
-    assert "access" in accept_response.data
+    assert accept_response.data["twoFactorRequired"] is True
 
     from apps.users.models import User
 

@@ -290,4 +290,11 @@ class StaffInviteAcceptView(generics.GenericAPIView):
         invite.accepted_at = timezone.now()
         invite.save(update_fields=["accepted_at"])
 
-        return Response(_tokens_for_user(user), status=status.HTTP_201_CREATED)
+        # Staff accounts always go through the 2FA challenge before getting
+        # tokens (see LoginView) -- accepting an invite shouldn't be a
+        # backdoor around that.
+        challenge_id = create_and_send_login_2fa_otp(user)
+        return Response(
+            {"twoFactorRequired": True, "challengeId": challenge_id},
+            status=status.HTTP_201_CREATED,
+        )
