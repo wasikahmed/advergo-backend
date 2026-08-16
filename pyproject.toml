@@ -56,4 +56,10 @@ known-first-party = ["apps", "config"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["test_*.py"]
-addopts = "-ra"
+# --ds explicitly overrides the DJANGO_SETTINGS_MODULE *environment variable*
+# (which otherwise wins over this file's setting above) -- the dev container
+# sets it to config.settings.dev via .env for `manage.py runserver`, which
+# silently ran every local pytest invocation against dev settings instead of
+# test settings: real async Celery (not CELERY_TASK_ALWAYS_EAGER) raced any
+# test asserting on a task's result immediately after dispatch.
+addopts = "-ra --ds=config.settings.test"

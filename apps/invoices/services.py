@@ -23,7 +23,7 @@ def render_invoice_pdf_bytes(order) -> bytes:
     from weasyprint import HTML
 
     company, _ = CompanyInfo.objects.get_or_create(
-        pk=1, defaults={"name": "Advergo Sports & Fashion Wear Ltd."}
+        pk=CompanyInfo.SINGLETON_ID, defaults={"name": "Advergo Sports & Fashion Wear Ltd."}
     )
     html = render_to_string(
         "invoices/invoice.html",
