@@ -8,7 +8,7 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from apps.catalog.models import Category, CategoryFilterOption, Design, Fabric, Product
+from apps.catalog.models import Category, Design, Fabric, Product
 from apps.invoices.models import Invoice
 from apps.invoices.services import generate_and_send_invoice
 from apps.orders.models import Order, OrderStatus
@@ -148,26 +148,24 @@ class Command(BaseCommand):
 
     def _seed_designs(self):
         count = 0
-        for slug in DESIGN_CATEGORIES:
-            category = Category.objects.get(slug=slug)
-            options = list(CategoryFilterOption.objects.filter(category=category))
-            for i in range(6):
-                option = options[i % len(options)] if options else None
-                label = f"{category.name} Design {i + 1}"
-                if Design.objects.filter(
-                    category=category, code=f"{slug.upper()}-{i + 1:03d}"
-                ).exists():
-                    continue
-                Design.objects.create(
-                    category=category,
-                    filter_option=option,
-                    name=label,
-                    code=f"{slug.upper()}-{i + 1:03d}",
-                    image=_placeholder_image(label, CATEGORY_COLORS[slug]),
-                    is_active=True,
-                    order=i,
-                )
-                count += 1
+        for parent_slug in DESIGN_CATEGORIES:
+            parent = Category.objects.get(slug=parent_slug)
+            leaves = list(parent.children.all()) or [parent]
+            for leaf in leaves:
+                for i in range(6):
+                    code = f"{leaf.slug.upper()}-{i + 1:03d}"
+                    label = f"{leaf.name} Design {i + 1}"
+                    if Design.objects.filter(category=leaf, code=code).exists():
+                        continue
+                    Design.objects.create(
+                        category=leaf,
+                        name=label,
+                        code=code,
+                        image=_placeholder_image(label, CATEGORY_COLORS[parent_slug]),
+                        is_active=True,
+                        order=i,
+                    )
+                    count += 1
         self.stdout.write(f"  designs: {count} created (+ existing)")
 
     def _seed_reviews(self):

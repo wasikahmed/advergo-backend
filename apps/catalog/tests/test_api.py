@@ -14,12 +14,12 @@ def api_client():
 
 @pytest.fixture
 def football():
-    return Category.objects.create(slug="football", name="Football", icon="⚽")
+    return Category.objects.create(slug="football", name="Football")
 
 
 @pytest.fixture
 def cricket():
-    return Category.objects.create(slug="cricket", name="Cricket", icon="🏏")
+    return Category.objects.create(slug="cricket", name="Cricket")
 
 
 def test_list_categories(api_client, football, cricket):

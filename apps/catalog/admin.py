@@ -1,21 +1,25 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import Category, CategoryFilterOption, Design, Fabric, Product, SizeChartRow
+from .models import Category, Design, Fabric, Product, SizeChartRow
 
 
-class CategoryFilterOptionInline(TabularInline):
-    model = CategoryFilterOption
+class SubcategoryInline(TabularInline):
+    model = Category
+    fk_name = "parent"
     extra = 1
+    fields = ["name", "slug", "image", "is_featured", "order"]
     ordering = ["order"]
 
 
 @admin.register(Category)
 class CategoryAdmin(ModelAdmin):
-    list_display = ["name", "slug", "icon", "order"]
+    list_display = ["name", "slug", "parent", "is_featured", "order"]
+    list_filter = ["is_featured", "parent"]
     ordering = ["order", "name"]
     search_fields = ["name", "slug"]
-    inlines = [CategoryFilterOptionInline]
+    autocomplete_fields = ["parent"]
+    inlines = [SubcategoryInline]
 
 
 @admin.register(Fabric)
@@ -51,19 +55,10 @@ class SizeChartRowAdmin(ModelAdmin):
     autocomplete_fields = ["category"]
 
 
-@admin.register(CategoryFilterOption)
-class CategoryFilterOptionAdmin(ModelAdmin):
-    list_display = ["label", "value", "category", "order"]
-    list_filter = ["category"]
-    search_fields = ["label", "value"]
-    ordering = ["category", "order"]
-    autocomplete_fields = ["category"]
-
-
 @admin.register(Design)
 class DesignAdmin(ModelAdmin):
-    list_display = ["__str__", "category", "filter_option", "is_active", "order", "created_at"]
-    list_filter = ["category", "filter_option", "is_active"]
+    list_display = ["__str__", "category", "is_active", "order", "created_at"]
+    list_filter = ["category", "is_active"]
     search_fields = ["name", "code"]
     ordering = ["-created_at"]
-    autocomplete_fields = ["category", "filter_option"]
+    autocomplete_fields = ["category"]

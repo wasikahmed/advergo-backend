@@ -3,14 +3,36 @@ from django.db import models
 from apps.core.models import SoftDeleteModel, TimeStampedModel
 
 
-class Category(TimeStampedModel):
-    """Product category (football, cricket, corporate wear, etc.), kept as data,
-    not an enum, so new categories can be added from the admin without a deploy."""
+def category_image_upload_path(instance, filename):
+    return f"advergo/categories/{instance.slug}/{filename}"
 
+
+class Category(TimeStampedModel):
+    """
+    Product category (football, cricket, corporate wear, etc.), kept as data,
+    not an enum, so new categories can be added from the admin without a
+    deploy. Self-referential: a category with children (e.g. Polo -> Full
+    Sleeve / Half Sleeve) is a browsable parent whose children are real
+    subcategories -- own slug, own image, own page -- not just a filter
+    pill. A category with no children is a leaf on its own.
+    """
+
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="children",
+        help_text="Leave blank for a top-level category.",
+    )
     slug = models.SlugField(unique=True, max_length=40)
     name = models.CharField(max_length=80)
-    icon = models.CharField(max_length=8, blank=True, help_text="Emoji shown in the UI.")
+    image = models.ImageField(upload_to=category_image_upload_path, blank=True, null=True)
     description = models.CharField(max_length=200, blank=True)
+    is_featured = models.BooleanField(
+        default=False,
+        help_text="Shown on the homepage. Every category is listed on /categories regardless.",
+    )
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -18,7 +40,7 @@ class Category(TimeStampedModel):
         ordering = ["order", "name"]
 
     def __str__(self):
-        return self.name
+        return f"{self.parent.name} · {self.name}" if self.parent_id else self.name
 
 
 class Fabric(TimeStampedModel, SoftDeleteModel):
@@ -99,38 +121,9 @@ class Product(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 
-class CategoryFilterOption(TimeStampedModel):
-    """
-    One selectable filter pill for a category's design catalog (e.g. Polo's
-    "Full Sleeve" / "Half Sleeve", or Winter Collection's "Jacket" /
-    "Tracksuit" / "Trouser"). A category with no options has no filter bar --
-    kept as data (like Category itself) so a new category's whole filter set
-    can be defined from the admin with no deploy.
-    """
-
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="filter_options")
-    value = models.SlugField(
-        max_length=40, help_text="Stable key used in the API/URL, e.g. 'jacket'."
-    )
-    label = models.CharField(max_length=60, help_text="Shown in the UI, e.g. 'Jacket'.")
-    order = models.PositiveIntegerField(default=0)
-
-    class Meta:
-        ordering = ["category_id", "order"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["category", "value"], name="unique_category_filter_value"
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.category.name} · {self.label}"
-
-
 def design_upload_path(instance, filename):
     category_slug = instance.category.slug if instance.category_id else "uncategorized"
-    filter_value = instance.filter_option.value if instance.filter_option_id else "all"
-    return f"advergo/designs/{category_slug}/{filter_value}/{filename}"
+    return f"advergo/designs/{category_slug}/{filename}"
 
 
 class Design(TimeStampedModel, SoftDeleteModel):
@@ -138,18 +131,13 @@ class Design(TimeStampedModel, SoftDeleteModel):
     A single browsable design in the design collection (as opposed to
     `Product`, which is a category tile/portfolio entry). Customers pick a
     Design and it carries through to their quote/order -- this is the
-    replacement for the Google Drive design folder.
+    replacement for the Google Drive design folder. `category` points at
+    whichever node the design actually belongs to -- the subcategory leaf
+    (e.g. Polo -> Full Sleeve) when one exists, otherwise the top-level
+    category itself.
     """
 
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="designs")
-    filter_option = models.ForeignKey(
-        CategoryFilterOption,
-        null=True,
-        blank=True,
-        on_delete=models.PROTECT,
-        related_name="designs",
-        help_text="Leave blank if the category has no filter options.",
-    )
     name = models.CharField(max_length=150, blank=True)
     code = models.CharField(
         max_length=40, blank=True, help_text="Internal reference code shown to staff/customers."
@@ -163,9 +151,3 @@ class Design(TimeStampedModel, SoftDeleteModel):
 
     def __str__(self):
         return self.name or self.code or f"Design {self.pk}"
-
-    def clean(self):
-        from django.core.exceptions import ValidationError
-
-        if self.filter_option_id and self.filter_option.category_id != self.category_id:
-            raise ValidationError("filter_option must belong to the same category.")

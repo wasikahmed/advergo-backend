@@ -14,11 +14,23 @@ from .serializers import (
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.prefetch_related("filter_options")
+    """
+    List returns only top-level categories (each with its subcategories
+    nested under `children`) -- that's what the homepage and /categories
+    page need. Retrieve-by-slug works for any node, top-level or
+    subcategory, so a subcategory's own page can fetch its name/image too.
+    """
+
     serializer_class = CategorySerializer
     permission_classes = [ReadOnlyOrAdmin]
     pagination_class = None
     lookup_field = "slug"
+
+    def get_queryset(self):
+        queryset = Category.objects.prefetch_related("children")
+        if self.action == "list":
+            queryset = queryset.filter(parent__isnull=True)
+        return queryset
 
 
 class FabricViewSet(viewsets.ModelViewSet):
@@ -48,7 +60,7 @@ class SizeChartRowViewSet(viewsets.ModelViewSet):
 
 class DesignViewSet(viewsets.ModelViewSet):
     queryset = Design.objects.filter(deleted_at__isnull=True, is_active=True).select_related(
-        "category", "filter_option"
+        "category"
     )
     serializer_class = DesignSerializer
     permission_classes = [ReadOnlyOrAdmin]

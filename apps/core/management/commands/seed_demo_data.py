@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.catalog.models import Category, CategoryFilterOption, Fabric, Product
+from apps.catalog.models import Category, Fabric, Product
 from apps.content.models import (
     Achievement,
     AchievementKind,
@@ -20,53 +20,58 @@ CATEGORIES = [
     {
         "slug": "football",
         "name": "Football",
-        "icon": "⚽",
         "description": "Jersey · Trouser · Shorts",
+        "is_featured": True,
     },
-    {"slug": "cycling", "name": "Cycling", "icon": "🚴", "description": "Pro Jersey · Bandana"},
-    {"slug": "cricket", "name": "Cricket", "icon": "🏏", "description": "Shirt · Trouser · Cap"},
-    {"slug": "marathon", "name": "Marathon", "icon": "🏃", "description": "Jersey · Shorts"},
+    {"slug": "cycling", "name": "Cycling", "description": "Pro Jersey · Bandana"},
+    {
+        "slug": "cricket",
+        "name": "Cricket",
+        "description": "Shirt · Trouser · Cap",
+        "is_featured": True,
+    },
+    {"slug": "marathon", "name": "Marathon", "description": "Jersey · Shorts"},
     {
         "slug": "corporate",
         "name": "Corporate",
-        "icon": "👔",
         "description": "Polo · T-Shirt · Jacket",
+        "is_featured": True,
     },
     # Design-collection categories (from the client brief): a continuously
     # growing library of designs customers browse and pick from directly,
-    # separate from the sport-kit categories above. Each has its own filter
-    # set via CATEGORY_FILTER_OPTIONS below.
-    {"slug": "polo", "name": "Polo", "icon": "🎽", "description": "Full Sleeve · Half Sleeve"},
+    # separate from the sport-kit categories above. Each has real
+    # subcategories (own slug/image/page) via SUBCATEGORIES below, not just
+    # a filter pill.
     {
-        "slug": "round-neck",
-        "name": "Round Neck",
-        "icon": "👕",
+        "slug": "polo",
+        "name": "Polo",
         "description": "Full Sleeve · Half Sleeve",
+        "is_featured": True,
     },
-    {
-        "slug": "v-neck",
-        "name": "V-Neck",
-        "icon": "👕",
-        "description": "Full Sleeve · Half Sleeve",
-    },
+    {"slug": "round-neck", "name": "Round Neck", "description": "Full Sleeve · Half Sleeve"},
+    {"slug": "v-neck", "name": "V-Neck", "description": "Full Sleeve · Half Sleeve"},
     {
         "slug": "winter-collection",
         "name": "Winter Collection",
-        "icon": "🧥",
         "description": "Jacket · Tracksuit · Trouser",
+        "is_featured": True,
     },
 ]
 
-# Filter pills shown on each design-collection category's browse page.
-# Sleeve length for the three shirt categories, garment type for Winter.
-CATEGORY_FILTER_OPTIONS = {
-    "polo": [("full-sleeve", "Full Sleeve"), ("half-sleeve", "Half Sleeve")],
-    "round-neck": [("full-sleeve", "Full Sleeve"), ("half-sleeve", "Half Sleeve")],
-    "v-neck": [("full-sleeve", "Full Sleeve"), ("half-sleeve", "Half Sleeve")],
+# Real subcategories (own slug/name, nested under a parent) shown on each
+# design-collection category's page. Sleeve length for the three shirt
+# categories, garment type for Winter.
+SUBCATEGORIES = {
+    "polo": [("polo-full-sleeve", "Full Sleeve"), ("polo-half-sleeve", "Half Sleeve")],
+    "round-neck": [
+        ("round-neck-full-sleeve", "Full Sleeve"),
+        ("round-neck-half-sleeve", "Half Sleeve"),
+    ],
+    "v-neck": [("v-neck-full-sleeve", "Full Sleeve"), ("v-neck-half-sleeve", "Half Sleeve")],
     "winter-collection": [
-        ("jacket", "Jacket"),
-        ("tracksuit", "Tracksuit"),
-        ("trouser", "Trouser"),
+        ("winter-jacket", "Jacket"),
+        ("winter-tracksuit", "Tracksuit"),
+        ("winter-trouser", "Trouser"),
     ],
 }
 
@@ -398,16 +403,19 @@ class Command(BaseCommand):
             categories[slug] = obj
         self.stdout.write(f"  categories: {len(categories)}")
 
-        filter_option_count = 0
-        for slug, options in CATEGORY_FILTER_OPTIONS.items():
-            for order, (value, label) in enumerate(options):
-                CategoryFilterOption.objects.update_or_create(
-                    category=categories[slug],
-                    value=value,
-                    defaults={"label": label, "order": order},
+        subcategory_count = 0
+        for parent_slug, children in SUBCATEGORIES.items():
+            for order, (slug, name) in enumerate(children):
+                Category.objects.update_or_create(
+                    slug=slug,
+                    defaults={
+                        "parent": categories[parent_slug],
+                        "name": name,
+                        "order": order,
+                    },
                 )
-                filter_option_count += 1
-        self.stdout.write(f"  category filter options: {filter_option_count}")
+                subcategory_count += 1
+        self.stdout.write(f"  subcategories: {subcategory_count}")
 
         for row in FABRICS:
             Fabric.objects.update_or_create(name=row["name"], defaults=row)
