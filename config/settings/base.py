@@ -17,6 +17,15 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 # convenience; production sets ADMIN_URL to a non-guessable slug via .env.prod
 # so the admin isn't sitting at the first path any scanner tries.
 ADMIN_URL = env("ADMIN_URL", default="admin/")
+# Only staff use any login form in this project (customers authenticate via
+# the JWT API instead) -- point Django's own LOGIN_URL default at the admin
+# login rather than the nonexistent /accounts/login/, since PasswordReset*
+# views resolve their own login links from this.
+LOGIN_URL = "admin:login"
+# Django's own default (/accounts/profile/) 404s here -- only matters when a
+# login form is submitted with no explicit ?next=, e.g. hitting /admin/login/
+# directly rather than being redirected there from a protected page.
+LOGIN_REDIRECT_URL = "admin:index"
 
 DJANGO_APPS = [
     "unfold",
@@ -71,6 +80,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.users.admin_2fa_middleware.AdminTwoFactorMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -204,6 +214,9 @@ REST_FRAMEWORK = {
         "user": "600/min",
         "quote_submit": "10/hour",
         "review_submit": "5/hour",
+        "otp_verify": "10/hour",
+        "otp_request": "5/hour",
+        "password_reset": "5/hour",
     },
 }
 
@@ -236,6 +249,16 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
+# --- Cache (also backs DRF's rate throttles and apps.users.otp) -------------
+# Separate Redis DB index from the Celery broker above so cache keys and
+# broker/queue data don't share a keyspace.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_CACHE_URL", default="redis://localhost:6379/1"),
+    }
+}
+
 # --- Email ------------------------------------------------------------------
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = env("EMAIL_HOST", default="")
@@ -244,6 +267,14 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Advergo <no-reply@advergo.com>")
+
+# --- Auth-adjacent -----------------------------------------------------------
+# Base URL of the frontend app, used to build links sent in emails (password
+# reset, staff invites).
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
+# OAuth 2.0 client ID (Web application type) from Google Cloud Console,
+# used to verify the ID token the frontend gets from Google Sign-In.
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 
 # --- File upload limits -----------------------------------------------------
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20 MB, matches quote-form spec

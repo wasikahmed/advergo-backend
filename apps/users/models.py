@@ -1,5 +1,6 @@
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
 from django.db import models
+from django.utils import timezone
 
 from apps.core.models import TimeStampedModel
 
@@ -15,7 +16,9 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     permissions stay data-driven and adjustable from the admin.
     """
 
-    email = models.EmailField(unique=True)
+    # Nullable (not just blank) so two phone-only accounts don't collide on
+    # email="" -- Postgres treats multiple NULLs in a unique column as distinct.
+    email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(max_length=20, unique=True, null=True, blank=True)
     full_name = models.CharField(max_length=150, blank=True)
 
@@ -31,4 +34,31 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.email
+        return self.email or self.phone or str(self.pk)
+
+
+class StaffInvite(TimeStampedModel):
+    """
+    Invite-only path for creating staff accounts -- an existing admin invites
+    an email address to a specific Group, the recipient follows the link and
+    sets their own password. No open self-serve staff registration endpoint.
+    """
+
+    email = models.EmailField()
+    group = models.ForeignKey(Group, on_delete=models.PROTECT, related_name="staff_invites")
+    invited_by = models.ForeignKey(
+        "users.User", on_delete=models.SET_NULL, null=True, related_name="staff_invites_sent"
+    )
+    token = models.CharField(max_length=64, unique=True, editable=False)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.email} -> {self.group.name}"
+
+    @property
+    def is_valid(self):
+        return self.accepted_at is None and timezone.now() < self.expires_at

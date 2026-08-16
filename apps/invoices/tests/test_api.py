@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 from apps.invoices.models import Invoice
 from apps.orders.models import Order
 from apps.users.tests.factories import UserFactory
+from apps.users.tests.helpers import login
 
 pytestmark = pytest.mark.django_db
 
@@ -16,11 +17,6 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def api_client():
     return APIClient()
-
-
-def login(api_client, email, password="Str0ngPassw0rd!"):
-    response = api_client.post("/api/v1/auth/login/", {"identifier": email, "password": password})
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
 
 
 @pytest.fixture
@@ -46,6 +42,7 @@ def order_without_total():
 def test_admin_can_generate_invoice(api_client, order_with_total):
     admin = UserFactory(email="admin@example.com", password="Str0ngPassw0rd!", is_staff=True)
     login(api_client, admin.email)
+    mail.outbox.clear()  # drop the 2FA code email sent during login
 
     response = api_client.post(f"/api/v1/orders/{order_with_total.id}/generate_invoice/")
     assert response.status_code == status.HTTP_202_ACCEPTED

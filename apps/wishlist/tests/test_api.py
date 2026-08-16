@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 
 from apps.catalog.models import Category, Product
 from apps.users.tests.factories import UserFactory
+from apps.users.tests.helpers import login
 from apps.wishlist.models import WishlistItem
 
 pytestmark = pytest.mark.django_db
@@ -12,11 +13,6 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def api_client():
     return APIClient()
-
-
-def login(api_client, email, password="Str0ngPassw0rd!"):
-    response = api_client.post("/api/v1/auth/login/", {"identifier": email, "password": password})
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {response.data['access']}")
 
 
 @pytest.fixture

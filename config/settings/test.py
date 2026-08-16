@@ -17,3 +17,7 @@ MEDIA_ROOT = tempfile.mkdtemp(prefix="advergo-test-media-")
 # Celery tasks run synchronously and eagerly in tests -- no broker required.
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# No live Redis dependency for tests either -- LocMemCache backs both DRF's
+# throttles and apps.users.otp the same way the real Redis cache does.
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}

@@ -6,6 +6,7 @@ from rest_framework.test import APIClient
 from apps.catalog.models import Category, Fabric
 from apps.quotes.models import QuoteRequest, QuoteRequestStatus
 from apps.users.tests.factories import UserFactory
+from apps.users.tests.helpers import login as do_login
 
 pytestmark = pytest.mark.django_db
 
@@ -58,10 +59,7 @@ def test_submission_requires_name_phone_quantity(api_client):
 
 def test_logged_in_user_is_attached_to_their_quote(api_client, category):
     user = UserFactory(email="me@example.com", password="Str0ngPassw0rd!")
-    login = api_client.post(
-        "/api/v1/auth/login/", {"identifier": "me@example.com", "password": "Str0ngPassw0rd!"}
-    )
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
+    do_login(api_client, "me@example.com")
 
     response = api_client.post("/api/v1/quotes/", {"name": "Me", "phone": "0170000", "quantity": 5})
     assert response.status_code == status.HTTP_201_CREATED
@@ -112,10 +110,7 @@ def test_staff_can_list_and_update_status(api_client, category):
         reference_code="QR-TEST0001", name="Customer", phone="0170000", quantity=10
     )
 
-    login = api_client.post(
-        "/api/v1/auth/login/", {"identifier": "staff@example.com", "password": "Str0ngPassw0rd!"}
-    )
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
+    do_login(api_client, "staff@example.com")
 
     list_response = api_client.get("/api/v1/quotes/")
     assert list_response.status_code == status.HTTP_200_OK
@@ -136,10 +131,7 @@ def test_staff_cannot_edit_customer_submitted_fields(api_client):
         reference_code="QR-TEST0002", name="Original Name", phone="0170000", quantity=10
     )
 
-    login = api_client.post(
-        "/api/v1/auth/login/", {"identifier": "staff2@example.com", "password": "Str0ngPassw0rd!"}
-    )
-    api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
+    do_login(api_client, "staff2@example.com")
 
     api_client.patch(f"/api/v1/quotes/{quote.id}/", {"name": "Tampered Name"})
     quote.refresh_from_db()
