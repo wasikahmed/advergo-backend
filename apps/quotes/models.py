@@ -83,6 +83,14 @@ class QuoteRequest(TimeStampedModel):
     estimated_price_high = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True
     )
+    quoted_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Firm negotiated price staff enters before generating a formal Quotation "
+        "PDF. Leave blank to have the PDF print the estimated range instead.",
+    )
 
     status = models.CharField(
         max_length=12, choices=QuoteRequestStatus.choices, default=QuoteRequestStatus.PENDING

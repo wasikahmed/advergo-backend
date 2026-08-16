@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4; margin: 2cm 1.8cm; }
+  body { font-family: "Noto Sans Bengali", "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 12px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #eb2127; padding-bottom: 14px; margin-bottom: 22px; }
+  .company-name { font-size: 18px; font-weight: bold; color: #010101; margin: 0 0 4px; }
+  .company-detail { color: #555; font-size: 10.5px; line-height: 1.6; }
+  .doc-title { text-align: right; }
+  .doc-title h1 { font-size: 22px; color: #eb2127; margin: 0; letter-spacing: 1px; }
+  .doc-title p { margin: 2px 0; color: #555; font-size: 10.5px; }
+  .parties { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
+  .parties td { vertical-align: top; padding: 12px; width: 50%; border: 1px solid #eee; background: #fafafa; }
+  .parties td + td { border-left: none; }
+  .party-label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.06em; color: #888; margin-bottom: 5px; }
+  .party-value { font-size: 13px; font-weight: bold; color: #111; margin-bottom: 2px; }
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  table.items th { background: #f8f8f8; text-align: left; padding: 8px 10px; font-size: 10.5px; letter-spacing: 0.02em; color: #555; border-bottom: 2px solid #eee; }
+  table.items td { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; }
+  table.items .num { text-align: right; }
+  .totals { width: 280px; margin-left: auto; margin-top: 6px; margin-bottom: 30px; }
+  .totals table { width: 100%; border-collapse: collapse; }
+  .totals td { padding: 5px 0; font-size: 12px; }
+  .totals .label { color: #555; }
+  .totals .value { text-align: right; font-weight: bold; }
+  .totals .total-row { border-top: 2px solid #eb2127; }
+  .totals .total-row .value { color: #eb2127; font-size: 14px; }
+  .signatures { width: 100%; margin-top: 60px; border-collapse: collapse; }
+  .signatures td { width: 50%; vertical-align: bottom; padding: 0 20px; text-align: center; }
+  .sig-image { max-height: 50px; margin-bottom: 4px; }
+  .sig-line { border-top: 1px solid #333; padding-top: 6px; font-size: 11px; }
+  .sig-role { color: #555; font-size: 10px; margin-top: 2px; }
+  .footer-note { margin-top: 30px; font-size: 10px; color: #777; border-top: 1px solid #eee; padding-top: 10px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <p class="company-name">{{ company.name }}</p>
+      <div class="company-detail">
+        {{ company.head_office }}<br />
+        {{ company.phone }} &middot; {{ company.email }}
+        {% if company.trade_license_no %}<br />ট্রেড লাইসেন্স: {{ company.trade_license_no }}{% endif %}
+      </div>
+    </div>
+    <div class="doc-title">
+      <h1>চালান</h1>
+      <p>{{ chalan_number }}</p>
+      <p>{{ issued_date }}</p>
+    </div>
+  </div>
+
+  <table class="parties">
+    <tr>
+      <td>
+        <div class="party-label">প্রেরক (Sender)</div>
+        <div class="party-value">{{ company.name }}</div>
+        <div class="company-detail">{{ company.head_office }}</div>
+        <div class="company-detail">{{ company.phone }}</div>
+      </td>
+      <td>
+        <div class="party-label">প্রাপক (Receiver)</div>
+        <div class="party-value">{{ order.name }}</div>
+        <div class="company-detail">{{ order.phone }}</div>
+        <div class="company-detail">{{ order.delivery_address|default:"—" }}</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="company-detail" style="margin-bottom: 16px;">
+    অর্ডার রেফারেন্স (Order reference): <strong>{{ order.reference_code }}</strong>
+  </div>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th>বিবরণ (Description)</th>
+        <th class="num">পরিমাণ (Qty)</th>
+        {% if include_price %}
+        <th class="num">একক মূল্য (Unit price)</th>
+        <th class="num">মোট (Amount)</th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {{ order.product.name|default:"Custom sportswear order" }}
+          {% if order.fabric %}<br /><span class="company-detail">Fabric: {{ order.fabric.name }}</span>{% endif %}
+          {% if order.size_breakdown %}<br /><span class="company-detail">Sizes: {{ order.size_breakdown }}</span>{% endif %}
+        </td>
+        <td class="num">{{ order.total_quantity }}</td>
+        {% if include_price %}
+        <td class="num">{% if order.unit_price %}৳{{ order.unit_price }}{% else %}—{% endif %}</td>
+        <td class="num">{% if order.total_value %}৳{{ order.total_value }}{% else %}—{% endif %}</td>
+        {% endif %}
+      </tr>
+    </tbody>
+  </table>
+
+  {% if include_price %}
+  <div class="totals">
+    <table>
+      <tr class="total-row">
+        <td class="label">মোট মূল্য (Total value)</td>
+        <td class="value">{% if order.total_value %}৳{{ order.total_value }}{% else %}—{% endif %}</td>
+      </tr>
+    </table>
+  </div>
+  {% endif %}
+
+  <table class="signatures">
+    <tr>
+      <td>
+        {% if company.signature_image %}
+          <img class="sig-image" src="{{ company.signature_image.url }}" alt="" />
+        {% endif %}
+        <div class="sig-line">অনুমোদিত স্বাক্ষর (Authorized Signature)</div>
+        {% if company.md %}<div class="sig-role">{{ company.md }}</div>{% endif %}
+      </td>
+      <td>
+        <div class="sig-line">&nbsp;</div>
+        <div class="sig-line">প্রাপকের স্বাক্ষর (Receiver's Signature)</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer-note">
+    এই চালানটি পণ্য পরিবহনের প্রমাণ হিসেবে ব্যবহারযোগ্য। This delivery challan is proof that this shipment is a
+    legitimate, traceable delivery from {{ company.name }}
+  </div>
+</body>
+</html>

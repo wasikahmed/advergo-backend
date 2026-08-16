@@ -2,10 +2,14 @@
 # no source bind-mount, runs as a non-root user, and serves via gunicorn).
 FROM python:3.12-slim
 
-# System deps: libpq for psycopg, pango/cairo/gdk-pixbuf for weasyprint PDF rendering.
+# System deps: libpq for psycopg, pango/cairo/gdk-pixbuf for weasyprint PDF
+# rendering, fonts-noto-bengali so generated PDFs (Chalan) can render Bengali
+# text and the Taka symbol (৳) -- the base image has no Bengali-capable font
+# at all, confirmed by WeasyPrint logging a missing-glyph box for ৳ without it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libffi-dev \
+    fonts-noto-core \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

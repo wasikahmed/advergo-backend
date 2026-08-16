@@ -21,10 +21,11 @@ class OrderFullSerializer(serializers.ModelSerializer):
     invoice = serializers.SerializerMethodField()
 
     def get_invoice(self, obj):
-        try:
-            return InvoiceSerializer(obj.invoice).data
-        except Invoice.DoesNotExist:
-            return None
+        # Invoice.order is a plain FK now (history-preserving, not a
+        # singleton) -- Meta.ordering = ["-created_at"] means .first() is
+        # always the latest one issued for this order.
+        latest = obj.invoices.first()
+        return InvoiceSerializer(latest).data if latest else None
 
     class Meta:
         model = Order

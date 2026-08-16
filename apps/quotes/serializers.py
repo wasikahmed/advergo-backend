@@ -84,6 +84,7 @@ class QuoteRequestAdminSerializer(serializers.ModelSerializer):
             "notes",
             "estimated_price_low",
             "estimated_price_high",
+            "quoted_price",
             "status",
             "admin_notes",
             "created_at",

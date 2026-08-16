@@ -48,5 +48,22 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         from apps.invoices.tasks import generate_and_send_invoice_task
 
-        generate_and_send_invoice_task.delay(str(order.id))
+        generate_and_send_invoice_task.delay(str(order.id), str(request.user.id))
         return Response({"detail": "Invoice generation started."}, status=202)
+
+    @action(detail=True, methods=["post"])
+    def generate_chalan(self, request, pk=None):
+        """Staff (Admin/AccountsFull) only. Not emailed automatically -- a
+        chalan travels with the physical shipment, so staff download and
+        print/hand it over rather than send it electronically."""
+        if not is_accounts_full(request.user):
+            return Response({"detail": "Not allowed."}, status=403)
+
+        order = self.get_object()
+        # CamelCaseJSONParser already converts incoming keys to snake_case.
+        include_price = bool(request.data.get("include_price", False))
+
+        from apps.invoices.tasks import generate_chalan_task
+
+        generate_chalan_task.delay(str(order.id), include_price, str(request.user.id))
+        return Response({"detail": "Chalan generation started."}, status=202)

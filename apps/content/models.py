@@ -189,6 +189,13 @@ class CompanyInfo(TimeStampedModel):
     md = models.CharField(max_length=120, blank=True)
     chairman = models.CharField(max_length=120, blank=True)
     trade_license_no = models.CharField(max_length=60, blank=True)
+    signature_image = models.ImageField(
+        upload_to="advergo/company/",
+        blank=True,
+        null=True,
+        help_text="Authorized signature/stamp -- printed on generated documents (Chalan, "
+        "etc.) above the `md` name. Falls back to a blank signature line if unset.",
+    )
     about = models.TextField(blank=True)
     mission = models.TextField(blank=True)
     vision = models.TextField(blank=True)

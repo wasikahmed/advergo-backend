@@ -43,3 +43,14 @@ class QuoteRequestViewSet(viewsets.ModelViewSet):
 
         order = convert_quote_to_order(self.get_object(), created_by=request.user)
         return Response(OrderFullSerializer(order).data, status=201)
+
+    @action(detail=True, methods=["post"], permission_classes=[IsAdmin])
+    def generate_quotation(self, request, pk=None):
+        """Staff action: render a formal Quotation PDF and email it to the
+        customer. Prints quote.quoted_price if staff set one, otherwise
+        falls back to the auto-estimated range."""
+        from apps.invoices.tasks import generate_and_send_quotation_task
+
+        quote = self.get_object()
+        generate_and_send_quotation_task.delay(str(quote.id), str(request.user.id))
+        return Response({"detail": "Quotation generation started."}, status=202)

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  @page { size: A4; margin: 2.2cm 1.8cm; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 12px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #eb2127; padding-bottom: 14px; margin-bottom: 24px; }
+  .company-name { font-size: 18px; font-weight: bold; color: #010101; margin: 0 0 4px; }
+  .company-detail { color: #555; font-size: 10.5px; line-height: 1.5; }
+  .doc-title { text-align: right; }
+  .doc-title h1 { font-size: 22px; color: #eb2127; margin: 0; letter-spacing: 1px; }
+  .doc-title p { margin: 2px 0; color: #555; font-size: 10.5px; }
+  .meta-table { width: 100%; margin-bottom: 22px; border-collapse: collapse; }
+  .meta-table td { vertical-align: top; padding: 0; width: 50%; }
+  .meta-label { text-transform: uppercase; font-size: 9px; letter-spacing: 0.06em; color: #888; margin-bottom: 3px; }
+  .meta-value { font-size: 12.5px; font-weight: bold; color: #111; }
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  table.items th { background: #f8f8f8; text-align: left; padding: 8px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #555; border-bottom: 2px solid #eee; }
+  table.items td { padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; }
+  table.items .num { text-align: right; }
+  .totals { width: 280px; margin-left: auto; margin-top: 10px; }
+  .totals table { width: 100%; border-collapse: collapse; }
+  .totals td { padding: 5px 0; font-size: 12px; }
+  .totals .label { color: #555; }
+  .totals .value { text-align: right; font-weight: bold; }
+  .totals .price-row { border-top: 2px solid #eb2127; }
+  .totals .price-row .value { color: #eb2127; font-size: 14px; }
+  .footer-note { margin-top: 40px; font-size: 10.5px; color: #777; border-top: 1px solid #eee; padding-top: 12px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <p class="company-name">{{ company.name }}</p>
+      <div class="company-detail">
+        {{ company.head_office }}<br />
+        {{ company.phone }} &middot; {{ company.email }}
+        {% if company.trade_license_no %}<br />Trade License: {{ company.trade_license_no }}{% endif %}
+      </div>
+    </div>
+    <div class="doc-title">
+      <h1>QUOTATION</h1>
+      <p>{{ quotation_number }}</p>
+      <p>{{ issued_date }}</p>
+    </div>
+  </div>
+
+  <table class="meta-table">
+    <tr>
+      <td>
+        <div class="meta-label">Quoted to</div>
+        <div class="meta-value">{{ quote.name }}</div>
+        <div class="company-detail">{{ quote.phone }}{% if quote.email %} &middot; {{ quote.email }}{% endif %}</div>
+      </td>
+      <td>
+        <div class="meta-label">Reference</div>
+        <div class="meta-value">{{ quote.reference_code }}</div>
+        <div class="company-detail">Status: {{ quote.get_status_display }}</div>
+      </td>
+    </tr>
+  </table>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="num">Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {% if quote.category %}{{ quote.category.name }}{% elif quote.product %}{{ quote.product.name }}{% else %}Custom sportswear order{% endif %}
+          {% if quote.fabric %}<br /><span class="company-detail">Fabric: {{ quote.fabric.name }}</span>{% endif %}
+          {% if quote.design %}<br /><span class="company-detail">Design: {{ quote.design.name|default:quote.design.code }}</span>{% endif %}
+          {% if quote.size_breakdown %}<br /><span class="company-detail">Sizes: {{ quote.size_breakdown }}</span>{% endif %}
+        </td>
+        <td class="num">{{ quote.quantity }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <table>
+      {% if quote.quoted_price %}
+      <tr class="price-row">
+        <td class="label">Quoted price</td>
+        <td class="value">৳{{ quote.quoted_price }} / pc</td>
+      </tr>
+      <tr>
+        <td class="label">Estimated total ({{ quote.quantity }} pcs)</td>
+        <td class="value">৳{{ quoted_total }}</td>
+      </tr>
+      {% elif quote.estimated_price_low and quote.estimated_price_high %}
+      <tr class="price-row">
+        <td class="label">Estimated price range</td>
+        <td class="value">৳{{ quote.estimated_price_low }}&ndash;৳{{ quote.estimated_price_high }}</td>
+      </tr>
+      {% else %}
+      <tr class="price-row">
+        <td class="label">Price</td>
+        <td class="value">To be confirmed</td>
+      </tr>
+      {% endif %}
+    </table>
+  </div>
+
+  <div class="footer-note">
+    This quotation is indicative and does not require payment to accept. Our team will contact you
+    directly by phone or WhatsApp ({{ company.phone }}) to confirm final details before production begins.
+    Thank you for considering {{ company.name }}
+  </div>
+</body>
+</html>
