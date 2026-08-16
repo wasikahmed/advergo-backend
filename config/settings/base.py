@@ -70,7 +70,12 @@ LOCAL_APPS = [
     "apps.wishlist",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+# django_cleanup must load last -- it walks every already-registered model's
+# FileField/ImageField to hook deletion signals, so any app after it in this
+# list would be missed. Deletes the *old* file from storage (Cloudinary in
+# prod) when a FileField/ImageField value is replaced or the row is deleted;
+# without it, replacing/deleting an image just orphans the old blob forever.
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS + ["django_cleanup.apps.CleanupConfig"]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

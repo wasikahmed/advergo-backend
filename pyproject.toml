@@ -24,6 +24,7 @@ dependencies = [
     "sentry-sdk>=2.13",
     "django-unfold>=0.38",
     "google-auth>=2.34",
+    "django-cleanup>=9.0.0",
 ]
 
 [dependency-groups]

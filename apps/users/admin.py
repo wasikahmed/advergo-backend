@@ -24,7 +24,7 @@ class UserAdmin(ModelAdmin, DjangoUserAdmin):
 
     fieldsets = (
         (None, {"fields": ("email", "phone", "password")}),
-        ("Personal info", {"fields": ("full_name",)}),
+        ("Personal info", {"fields": ("full_name", "avatar_url")}),
         (
             "Permissions",
             {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")},

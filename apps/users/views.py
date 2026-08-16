@@ -180,11 +180,17 @@ class GoogleLoginView(generics.GenericAPIView):
             defaults={
                 "email": email,
                 "full_name": payload.get("name", ""),
+                "avatar_url": payload.get("picture", ""),
             },
         )
         if created:
             user.set_unusable_password()
             user.save(update_fields=["password"])
+        elif payload.get("picture") and user.avatar_url != payload["picture"]:
+            # Google's photo URL can change over time -- keep it fresh on
+            # every login rather than only capturing it once at signup.
+            user.avatar_url = payload["picture"]
+            user.save(update_fields=["avatar_url"])
 
         if user.is_staff:
             challenge_id = create_and_send_login_2fa_otp(user)

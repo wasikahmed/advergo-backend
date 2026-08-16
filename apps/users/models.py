@@ -21,6 +21,10 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     email = models.EmailField(unique=True, null=True, blank=True)
     phone = models.CharField(max_length=20, unique=True, null=True, blank=True)
     full_name = models.CharField(max_length=150, blank=True)
+    # Points at Google's own CDN copy (from the ID token's `picture` claim) --
+    # not re-uploaded to our storage. Blank for accounts that never signed in
+    # with Google.
+    avatar_url = models.URLField(max_length=500, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
