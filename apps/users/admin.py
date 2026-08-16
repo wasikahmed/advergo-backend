@@ -3,8 +3,11 @@ from datetime import timedelta
 
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils import timezone
 from unfold.admin import ModelAdmin
+from unfold.decorators import action
 from unfold.forms import UserChangeForm, UserCreationForm
 
 from .invites import send_staff_invite_email
@@ -39,6 +42,14 @@ class UserAdmin(ModelAdmin, DjangoUserAdmin):
 
 @admin.register(StaffInvite)
 class StaffInviteAdmin(ModelAdmin):
+    """
+    Once an invite is accepted it's a historical record, not a thing to
+    manage -- editing/deleting it after the fact would let an admin silently
+    change what a real account-creation event looked like. Group changes and
+    account deletion belong on the User it created (apps.users.admin.UserAdmin),
+    not here.
+    """
+
     list_display = ["email", "group", "invited_by", "expires_at", "accepted_at", "created_at"]
     list_filter = ["group"]
     search_fields = ["email"]
@@ -46,6 +57,17 @@ class StaffInviteAdmin(ModelAdmin):
     readonly_fields = ["token", "invited_by", "expires_at", "accepted_at", "created_at", "updated_at"]
     autocomplete_fields = ["group"]
     actions = ["resend_invite"]
+    actions_row = ["resend_invite_row"]
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and obj.accepted_at is not None:
+            return False
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.accepted_at is not None:
+            return False
+        return super().has_delete_permission(request, obj)
 
     def save_model(self, request, obj, form, change):
         is_new = not change
@@ -58,6 +80,12 @@ class StaffInviteAdmin(ModelAdmin):
             send_staff_invite_email(obj)
             self.message_user(request, f"Invite email sent to {obj.email}.")
 
+    def _resend(self, invite):
+        invite.token = secrets.token_urlsafe(32)
+        invite.expires_at = timezone.now() + timedelta(days=7)
+        invite.save(update_fields=["token", "expires_at"])
+        send_staff_invite_email(invite)
+
     @admin.action(description="Resend invite email (refreshes the link's expiry)")
     def resend_invite(self, request, queryset):
         pending = queryset.filter(accepted_at__isnull=True)
@@ -65,10 +93,7 @@ class StaffInviteAdmin(ModelAdmin):
 
         sent = 0
         for invite in pending:
-            invite.token = secrets.token_urlsafe(32)
-            invite.expires_at = timezone.now() + timedelta(days=7)
-            invite.save(update_fields=["token", "expires_at"])
-            send_staff_invite_email(invite)
+            self._resend(invite)
             sent += 1
 
         self.message_user(request, f"Resent {sent} invite(s).", level=messages.SUCCESS)
@@ -78,3 +103,23 @@ class StaffInviteAdmin(ModelAdmin):
                 f"Skipped {already_accepted} already-accepted invite(s).",
                 level=messages.WARNING,
             )
+
+    @action(description="Resend", icon="mail")
+    def resend_invite_row(self, request, object_id):
+        # Unfold's actions_row button list is computed once for the whole
+        # table, not per row, so an already-accepted invite still gets the
+        # button -- guard here instead and fail gracefully rather than with
+        # a raw 403.
+        invite = self.get_object(request, object_id)
+        if invite is None:
+            self.message_user(request, "Invite not found.", level=messages.ERROR)
+        elif invite.accepted_at is not None:
+            self.message_user(
+                request,
+                f"{invite.email} already accepted their invite -- nothing to resend.",
+                level=messages.WARNING,
+            )
+        else:
+            self._resend(invite)
+            self.message_user(request, f"Invite email resent to {invite.email}.", level=messages.SUCCESS)
+        return redirect(reverse("admin:users_staffinvite_changelist"))
