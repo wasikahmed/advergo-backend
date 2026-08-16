@@ -10,6 +10,8 @@ from apps.content.models import (
     CompanyInfo,
     GalleryCategory,
     GalleryItem,
+    HomeSectionBanner,
+    HomeSectionKey,
     ProcessStep,
     Stat,
 )
@@ -174,6 +176,38 @@ PRODUCTS = [
         "review_count": 67,
         "accent_color": "#92400e",
         "is_featured": False,
+    },
+    # Category showcase: no price_range set -- these aren't ready stock, just
+    # examples of category work. A blank price_range is what puts a Product
+    # in the "Category Showcase" homepage section instead of "Ready Products";
+    # still orderable via the same quote flow, just with no price shown.
+    {
+        "name": "Football Club Kit Example",
+        "category": "football",
+        "fabric": "Pin Mesh Fabric",
+        "accent_color": "#1d4ed8",
+        "is_featured": True,
+    },
+    {
+        "name": "Cricket Team Set Example",
+        "category": "cricket",
+        "fabric": "Sugar Mesh Fabric",
+        "accent_color": "#065f46",
+        "is_featured": True,
+    },
+    {
+        "name": "Cycling Squad Kit Example",
+        "category": "cycling",
+        "fabric": "Brush Jacquard Fabric",
+        "accent_color": "#eb2127",
+        "is_featured": True,
+    },
+    {
+        "name": "Corporate Uniform Example",
+        "category": "corporate",
+        "fabric": "Honeycomb Fabric",
+        "accent_color": "#374151",
+        "is_featured": True,
     },
 ]
 
@@ -373,6 +407,24 @@ BANNER = {
     "priority": 10,
 }
 
+HOME_SECTION_BANNERS = {
+    HomeSectionKey.READY_PRODUCTS: {
+        "title": "Club & tournament jerseys, ready to order",
+        "href": "/products",
+        "is_active": True,
+    },
+    HomeSectionKey.CATEGORY_SHOWCASE: {
+        "title": "See what we make, by category",
+        "href": "/portfolio",
+        "is_active": True,
+    },
+    HomeSectionKey.DESIGN_COLLECTION: {
+        "title": "Browse our design collection",
+        "href": "/categories",
+        "is_active": True,
+    },
+}
+
 # Starting-point base prices only -- roughly the low end of each category's
 # existing product price ranges above. Not a real pricing policy; adjust these
 # (and add per-fabric rules) from the admin once real cost data is available.
@@ -477,6 +529,10 @@ class Command(BaseCommand):
         Banner.objects.all().delete()
         Banner.objects.create(**BANNER)
         self.stdout.write("  banner: 1")
+
+        for section, row in HOME_SECTION_BANNERS.items():
+            HomeSectionBanner.objects.update_or_create(section=section, defaults=row)
+        self.stdout.write(f"  home section banners: {len(HOME_SECTION_BANNERS)}")
 
         for slug, price in CATEGORY_PRICE_RULES.items():
             CategoryPriceRule.objects.update_or_create(

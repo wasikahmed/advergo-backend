@@ -9,6 +9,7 @@ from .views import (
     CompanyInfoView,
     GalleryCategoryViewSet,
     GalleryItemViewSet,
+    HomeSectionBannerViewSet,
     MobileBankingAgentViewSet,
     ProcessStepViewSet,
     StatViewSet,
@@ -17,6 +18,7 @@ from .views import (
 
 router = DefaultRouter()
 router.register("banners", BannerViewSet, basename="banner")
+router.register("section-banners", HomeSectionBannerViewSet, basename="section-banner")
 router.register("stats", StatViewSet, basename="stat")
 router.register("achievements", AchievementViewSet, basename="achievement")
 router.register("clients", ClientLogoViewSet, basename="client-logo")

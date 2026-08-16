@@ -10,6 +10,7 @@ from .models import (
     CompanyInfo,
     GalleryCategory,
     GalleryItem,
+    HomeSectionBanner,
     MobileBankingAgent,
     OfficialDocument,
     ProcessStep,
@@ -41,6 +42,12 @@ class BannerAdmin(ModelAdmin):
     list_display = ["title", "is_active", "priority", "featured_from", "featured_to"]
     list_filter = ["is_active"]
     search_fields = ["title", "subtitle"]
+
+
+@admin.register(HomeSectionBanner)
+class HomeSectionBannerAdmin(ModelAdmin):
+    list_display = ["section", "title", "href", "is_active"]
+    list_editable = ["is_active"]
 
 
 @admin.register(Stat)

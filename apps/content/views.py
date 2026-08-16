@@ -13,6 +13,7 @@ from .models import (
     CompanyInfo,
     GalleryCategory,
     GalleryItem,
+    HomeSectionBanner,
     MobileBankingAgent,
     ProcessStep,
     Stat,
@@ -26,6 +27,7 @@ from .serializers import (
     CompanyInfoSerializer,
     GalleryCategorySerializer,
     GalleryItemSerializer,
+    HomeSectionBannerSerializer,
     MobileBankingAgentSerializer,
     ProcessStepSerializer,
     StatSerializer,
@@ -43,6 +45,19 @@ class BannerViewSet(viewsets.ModelViewSet):
     def active(self, request):
         banners = Banner.objects.active()
         return Response(self.get_serializer(banners, many=True).data)
+
+
+class HomeSectionBannerViewSet(viewsets.ModelViewSet):
+    queryset = HomeSectionBanner.objects.all()
+    serializer_class = HomeSectionBannerSerializer
+    permission_classes = [ReadOnlyOrAdmin]
+    pagination_class = None
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.action == "list":
+            queryset = queryset.filter(is_active=True)
+        return queryset
 
 
 class StatViewSet(viewsets.ModelViewSet):

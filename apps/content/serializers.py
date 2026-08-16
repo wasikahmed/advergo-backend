@@ -8,6 +8,7 @@ from .models import (
     CompanyInfo,
     GalleryCategory,
     GalleryItem,
+    HomeSectionBanner,
     MobileBankingAgent,
     ProcessStep,
     Stat,
@@ -21,6 +22,14 @@ class BannerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Banner
         fields = ["id", "title", "subtitle", "image", "cta_label", "cta_href"]
+
+
+class HomeSectionBannerSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True, required=False, allow_null=True)
+
+    class Meta:
+        model = HomeSectionBanner
+        fields = ["id", "section", "image", "title", "href"]
 
 
 class StatSerializer(serializers.ModelSerializer):

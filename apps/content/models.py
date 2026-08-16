@@ -49,6 +49,31 @@ class Banner(TimeStampedModel):
         return self.title
 
 
+class HomeSectionKey(models.TextChoices):
+    READY_PRODUCTS = "ready_products", "Ready Products"
+    CATEGORY_SHOWCASE = "category_showcase", "Category Showcase"
+    DESIGN_COLLECTION = "design_collection", "Design Collection"
+
+
+class HomeSectionBanner(TimeStampedModel):
+    """One clickable banner per homepage product section -- image + where it
+    links to, editable from admin with no code change. Not the same as
+    `Banner` (the hero carousel, which is scheduled/prioritised); this is a
+    single static row per section."""
+
+    section = models.CharField(max_length=20, choices=HomeSectionKey.choices, unique=True)
+    image = models.ImageField(upload_to="advergo/section_banners/", blank=True, null=True)
+    title = models.CharField(max_length=150, blank=True)
+    href = models.CharField(max_length=200, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["section"]
+
+    def __str__(self):
+        return self.get_section_display()
+
+
 class Stat(TimeStampedModel):
     value = models.CharField(max_length=30)
     label = models.CharField(max_length=80)
