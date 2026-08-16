@@ -1,7 +1,7 @@
 import secrets
 from datetime import timedelta
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils import timezone
 from unfold.admin import ModelAdmin
@@ -45,6 +45,7 @@ class StaffInviteAdmin(ModelAdmin):
     ordering = ["-created_at"]
     readonly_fields = ["token", "invited_by", "expires_at", "accepted_at", "created_at", "updated_at"]
     autocomplete_fields = ["group"]
+    actions = ["resend_invite"]
 
     def save_model(self, request, obj, form, change):
         is_new = not change
@@ -56,3 +57,24 @@ class StaffInviteAdmin(ModelAdmin):
         if is_new:
             send_staff_invite_email(obj)
             self.message_user(request, f"Invite email sent to {obj.email}.")
+
+    @admin.action(description="Resend invite email (refreshes the link's expiry)")
+    def resend_invite(self, request, queryset):
+        pending = queryset.filter(accepted_at__isnull=True)
+        already_accepted = queryset.count() - pending.count()
+
+        sent = 0
+        for invite in pending:
+            invite.token = secrets.token_urlsafe(32)
+            invite.expires_at = timezone.now() + timedelta(days=7)
+            invite.save(update_fields=["token", "expires_at"])
+            send_staff_invite_email(invite)
+            sent += 1
+
+        self.message_user(request, f"Resent {sent} invite(s).", level=messages.SUCCESS)
+        if already_accepted:
+            self.message_user(
+                request,
+                f"Skipped {already_accepted} already-accepted invite(s).",
+                level=messages.WARNING,
+            )

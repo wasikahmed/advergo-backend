@@ -18,6 +18,7 @@ class OrderAdmin(ModelAdmin):
         "created_at",
     ]
     list_filter = ["status", "category"]
+    list_editable = ["status"]
     search_fields = ["reference_code", "name", "phone", "email"]
     autocomplete_fields = [
         "category",

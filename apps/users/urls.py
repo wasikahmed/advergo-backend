@@ -12,6 +12,7 @@ from .views import (
     RegisterView,
     StaffInviteAcceptView,
     StaffInviteCreateView,
+    TwoFactorResendView,
     TwoFactorVerifyView,
 )
 
@@ -22,6 +23,7 @@ urlpatterns = [
     path("logout/", TokenBlacklistView.as_view(), name="auth-logout"),
     path("me/", MeView.as_view(), name="auth-me"),
     path("2fa/verify/", TwoFactorVerifyView.as_view(), name="auth-2fa-verify"),
+    path("2fa/resend/", TwoFactorResendView.as_view(), name="auth-2fa-resend"),
     path(
         "password-reset/request/",
         PasswordResetRequestView.as_view(),

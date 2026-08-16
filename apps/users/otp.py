@@ -93,6 +93,28 @@ def create_and_send_login_2fa_otp(user) -> str:
     return challenge_id
 
 
+def resend_otp(*, challenge_id: str, purpose: str) -> bool:
+    """Re-sends a code for an *existing* challenge instead of minting a new
+    challenge_id -- the caller (frontend) is already holding this
+    challenge_id, so reusing it means no extra round-trip/state to thread
+    through. Refreshes the TTL too, so a slow-to-arrive first email doesn't
+    leave the user racing an expiry that was already ticking down.
+    Returns False if the challenge doesn't exist/expired or purpose
+    mismatches -- same "don't leak which part failed" shape as verify_otp."""
+    key = _cache_key(str(challenge_id))
+    data = cache.get(key)
+    if data is None or data["purpose"] != purpose:
+        return False
+
+    code = generate_otp_code()
+    data["code_hash"] = _hash_code(code)
+    cache.set(key, data, timeout=OTP_TTL_SECONDS)
+
+    if data["channel"] == OTPChannel.EMAIL:
+        send_email_otp(data["identifier"], code)
+    return True
+
+
 def verify_otp(*, challenge_id: str, code: str, purpose: str) -> VerifiedOTP | None:
     """Single-use: valid challenges are deleted from the cache on both a
     successful and a failed-but-matched-purpose attempt is *not* deleted,

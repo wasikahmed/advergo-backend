@@ -83,6 +83,39 @@ def test_2fa_code_cannot_be_reused(api_client):
     assert second.status_code == status.HTTP_400_BAD_REQUEST
 
 
+def test_2fa_resend_sends_a_new_code_that_verifies(api_client):
+    UserFactory(email="admin7@example.com", password="Str0ngPassw0rd!", is_staff=True)
+    login_response = api_client.post(
+        "/api/v1/auth/login/", {"identifier": "admin7@example.com", "password": "Str0ngPassw0rd!"}
+    )
+    challenge_id = login_response.data["challengeId"]
+    first_code = re.search(r"code is (\d{6})", mail.outbox[-1].body).group(1)
+
+    resend = api_client.post("/api/v1/auth/2fa/resend/", {"challengeId": challenge_id})
+    assert resend.status_code == status.HTTP_200_OK
+    assert len(mail.outbox) == 2
+    new_code = re.search(r"code is (\d{6})", mail.outbox[-1].body).group(1)
+    assert new_code != first_code
+
+    # The old code no longer works -- resend replaces it, doesn't add to it.
+    stale = api_client.post(
+        "/api/v1/auth/2fa/verify/", {"challengeId": challenge_id, "code": first_code}
+    )
+    assert stale.status_code == status.HTTP_400_BAD_REQUEST
+
+    fresh = api_client.post(
+        "/api/v1/auth/2fa/verify/", {"challengeId": challenge_id, "code": new_code}
+    )
+    assert fresh.status_code == status.HTTP_200_OK
+
+
+def test_2fa_resend_rejects_unknown_challenge(api_client):
+    response = api_client.post(
+        "/api/v1/auth/2fa/resend/", {"challengeId": "00000000-0000-0000-0000-000000000000"}
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
 # --- Password reset ------------------------------------------------------------
 
 

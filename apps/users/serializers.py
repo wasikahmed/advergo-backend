@@ -46,6 +46,10 @@ class TwoFactorVerifySerializer(serializers.Serializer):
     code = serializers.CharField(max_length=8)
 
 
+class TwoFactorResendSerializer(serializers.Serializer):
+    challenge_id = serializers.UUIDField()
+
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 

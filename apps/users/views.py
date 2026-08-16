@@ -18,7 +18,14 @@ from apps.core.permissions import IsAdmin
 
 from .invites import send_staff_invite_email
 from .models import StaffInvite
-from .otp import OTPChannel, OTPPurpose, create_and_send_login_2fa_otp, create_otp, verify_otp
+from .otp import (
+    OTPChannel,
+    OTPPurpose,
+    create_and_send_login_2fa_otp,
+    create_otp,
+    resend_otp,
+    verify_otp,
+)
 from .password_reset import send_password_reset_email
 from .serializers import (
     EmailOrPhoneTokenObtainPairSerializer,
@@ -31,6 +38,7 @@ from .serializers import (
     RegisterSerializer,
     StaffInviteAcceptSerializer,
     StaffInviteCreateSerializer,
+    TwoFactorResendSerializer,
     TwoFactorVerifySerializer,
 )
 from .sms import SMSNotConfiguredError, send_sms_otp
@@ -98,6 +106,30 @@ class TwoFactorVerifyView(generics.GenericAPIView):
 
         user = User.objects.get(pk=otp.user_id)
         return Response(_tokens_for_user(user), status=status.HTTP_200_OK)
+
+
+class TwoFactorResendView(generics.GenericAPIView):
+    """Re-sends the code for an in-progress LOGIN_2FA challenge -- shared by
+    the login page and the staff-invite-accept page, both of which land on
+    the same challenge/code flow after their first step succeeds."""
+
+    serializer_class = TwoFactorResendSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_throttles(self):
+        self.throttle_scope = "otp_request"
+        return [ScopedRateThrottle()]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        sent = resend_otp(
+            challenge_id=serializer.validated_data["challenge_id"], purpose=OTPPurpose.LOGIN_2FA
+        )
+        if not sent:
+            raise ValidationError({"challengeId": "This challenge has expired. Please start over."})
+        return Response({"detail": "Code resent."})
 
 
 class MeView(generics.RetrieveUpdateAPIView):
