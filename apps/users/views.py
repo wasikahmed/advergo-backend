@@ -3,7 +3,6 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
 from django.utils import timezone
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
@@ -17,6 +16,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.core.permissions import IsAdmin
 
+from .invites import send_staff_invite_email
 from .models import StaffInvite
 from .otp import OTPChannel, OTPPurpose, create_and_send_login_2fa_otp, create_otp, verify_otp
 from .password_reset import send_password_reset_email
@@ -261,20 +261,7 @@ class StaffInviteCreateView(generics.CreateAPIView):
             token=secrets.token_urlsafe(32),
             expires_at=timezone.now() + timedelta(days=7),
         )
-        self._send_invite_email(invite)
-
-    def _send_invite_email(self, invite):
-        accept_link = f"{settings.FRONTEND_URL}/admin/accept-invite?token={invite.token}"
-        send_mail(
-            subject="You've been invited to the Advergo admin",
-            message=(
-                f"You've been invited to join the Advergo admin as part of the "
-                f"'{invite.group.name}' group. Accept the invite and set your password here: "
-                f"{accept_link}\n\nThis link expires in 7 days."
-            ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[invite.email],
-        )
+        send_staff_invite_email(invite)
 
 
 class StaffInviteAcceptView(generics.GenericAPIView):

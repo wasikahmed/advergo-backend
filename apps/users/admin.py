@@ -7,6 +7,7 @@ from django.utils import timezone
 from unfold.admin import ModelAdmin
 from unfold.forms import UserChangeForm, UserCreationForm
 
+from .invites import send_staff_invite_email
 from .models import StaffInvite, User
 
 
@@ -42,12 +43,16 @@ class StaffInviteAdmin(ModelAdmin):
     list_filter = ["group"]
     search_fields = ["email"]
     ordering = ["-created_at"]
-    readonly_fields = ["token", "invited_by", "accepted_at", "created_at", "updated_at"]
+    readonly_fields = ["token", "invited_by", "expires_at", "accepted_at", "created_at", "updated_at"]
     autocomplete_fields = ["group"]
 
     def save_model(self, request, obj, form, change):
-        if not change:
+        is_new = not change
+        if is_new:
             obj.invited_by = request.user
             obj.token = secrets.token_urlsafe(32)
             obj.expires_at = timezone.now() + timedelta(days=7)
         super().save_model(request, obj, form, change)
+        if is_new:
+            send_staff_invite_email(obj)
+            self.message_user(request, f"Invite email sent to {obj.email}.")
