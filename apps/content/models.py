@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.utils import timezone
 
@@ -27,7 +29,7 @@ class Banner(TimeStampedModel):
         "'Built for champions.\\nMade your way.' -- the part after the break is highlighted red.",
     )
     subtitle = models.CharField(max_length=300, blank=True)
-    image = models.ImageField(upload_to="banners/", blank=True, null=True)
+    image = models.ImageField(upload_to="advergo/banners/", blank=True, null=True)
     cta_label = models.CharField(max_length=40, blank=True)
     cta_href = models.CharField(max_length=200, blank=True)
 
@@ -66,7 +68,7 @@ class AchievementKind(models.TextChoices):
 
 class Achievement(TimeStampedModel):
     kind = models.CharField(max_length=10, choices=AchievementKind.choices)
-    image = models.ImageField(upload_to="achievements/", blank=True, null=True)
+    image = models.ImageField(upload_to="advergo/achievements/", blank=True, null=True)
     title = models.CharField(max_length=120)
     year = models.CharField(max_length=10, blank=True)
     issuing_body = models.CharField(max_length=200, blank=True)
@@ -84,7 +86,7 @@ class ClientLogo(TimeStampedModel):
     # Either an external URL (e.g. Clearbit's logo API) or an uploaded image --
     # logo_image wins when both are set (see `logo` property).
     logo_url = models.URLField(blank=True)
-    logo_image = models.ImageField(upload_to="clients/", blank=True, null=True)
+    logo_image = models.ImageField(upload_to="advergo/clients/", blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -116,7 +118,7 @@ class GalleryCategory(TimeStampedModel):
     """Gallery photo category (factory, clients, ...), kept as data, not an
     enum, so new categories can be added from the admin without a deploy."""
 
-    slug = models.SlugField(primary_key=True, max_length=40)
+    slug = models.SlugField(unique=True, max_length=40)
     name = models.CharField(max_length=80)
     icon = models.CharField(max_length=8, blank=True, help_text="Emoji shown in the UI.")
     order = models.PositiveIntegerField(default=0)
@@ -130,7 +132,7 @@ class GalleryCategory(TimeStampedModel):
 
 
 class GalleryItem(TimeStampedModel):
-    image = models.ImageField(upload_to="gallery/", blank=True, null=True)
+    image = models.ImageField(upload_to="advergo/gallery/", blank=True, null=True)
     label = models.CharField(max_length=120)
     category = models.ForeignKey(
         GalleryCategory, on_delete=models.PROTECT, related_name="gallery_items"
@@ -146,7 +148,9 @@ class GalleryItem(TimeStampedModel):
 
 
 class CompanyInfo(TimeStampedModel):
-    """Singleton -- always exactly one row (pk=1)."""
+    """Singleton -- always exactly one row, fixed at SINGLETON_ID."""
+
+    SINGLETON_ID = uuid.UUID("00000000-0000-0000-0000-000000000001")
 
     name = models.CharField(max_length=150)
     tagline = models.CharField(max_length=150, blank=True)
@@ -168,7 +172,7 @@ class CompanyInfo(TimeStampedModel):
         verbose_name = verbose_name_plural = "company info"
 
     def save(self, *args, **kwargs):
-        self.pk = 1
+        self.pk = self.SINGLETON_ID
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
@@ -181,7 +185,7 @@ class CompanyInfo(TimeStampedModel):
 class TeamMember(TimeStampedModel):
     name = models.CharField(max_length=120)
     role = models.CharField(max_length=120)
-    photo = models.ImageField(upload_to="team/", blank=True, null=True)
+    photo = models.ImageField(upload_to="advergo/team/", blank=True, null=True)
     bio = models.TextField(blank=True, help_text="Leadership quote/bio; usually blank for staff.")
     is_leadership = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
@@ -238,7 +242,7 @@ class OfficialDocument(TimeStampedModel):
     reference_number = models.CharField(max_length=100, blank=True)
     issue_date = models.DateField(null=True, blank=True)
     file = models.FileField(
-        upload_to="official_documents/", storage=get_raw_file_storage, blank=True, null=True
+        upload_to="advergo/official_documents/", storage=get_raw_file_storage, blank=True, null=True
     )
     notes = models.CharField(max_length=200, blank=True)
 

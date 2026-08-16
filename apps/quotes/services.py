@@ -19,6 +19,7 @@ def convert_quote_to_order(quote, created_by):
         category=quote.category,
         product=quote.product,
         fabric=quote.fabric,
+        design=quote.design,
         total_quantity=quote.quantity,
         size_breakdown=quote.size_breakdown,
         created_by=created_by,

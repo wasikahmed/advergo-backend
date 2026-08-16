@@ -9,7 +9,7 @@ class Invoice(TimeStampedModel):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="invoice")
     invoice_number = models.CharField(max_length=30, unique=True, editable=False)
     pdf_file = models.FileField(
-        upload_to="invoices/", blank=True, null=True, storage=get_raw_file_storage
+        upload_to="advergo/invoices/", blank=True, null=True, storage=get_raw_file_storage
     )
     sent_at = models.DateTimeField(null=True, blank=True)
 

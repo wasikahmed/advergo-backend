@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.db import models
 
-from apps.catalog.models import Category, Fabric, Product
+from apps.catalog.models import Category, Design, Fabric, Product
 from apps.core.models import TimeStampedModel
 from apps.quotes.models import QuoteRequest
 
@@ -49,6 +49,9 @@ class Order(TimeStampedModel):
     )
     fabric = models.ForeignKey(
         Fabric, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders"
+    )
+    design = models.ForeignKey(
+        Design, null=True, blank=True, on_delete=models.SET_NULL, related_name="orders"
     )
 
     total_quantity = models.PositiveIntegerField()

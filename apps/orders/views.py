@@ -48,5 +48,5 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         from apps.invoices.tasks import generate_and_send_invoice_task
 
-        generate_and_send_invoice_task.delay(order.id)
+        generate_and_send_invoice_task.delay(str(order.id))
         return Response({"detail": "Invoice generation started."}, status=202)

@@ -1,14 +1,21 @@
 from rest_framework import serializers
 
-from .models import Category, Fabric, Product, SizeChartRow
+from .models import Category, CategoryFilterOption, Design, Fabric, Product, SizeChartRow
+
+
+class CategoryFilterOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CategoryFilterOption
+        fields = ["id", "value", "label"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
     id = serializers.CharField(source="slug")
+    filter_options = CategoryFilterOptionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Category
-        fields = ["id", "name", "icon", "description"]
+        fields = ["id", "name", "icon", "description", "filter_options"]
 
 
 class FabricSerializer(serializers.ModelSerializer):
@@ -62,3 +69,35 @@ class ProductSerializer(serializers.ModelSerializer):
             "image",
             "is_featured",
         ]
+
+
+class DesignSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(slug_field="slug", queryset=Category.objects.all())
+    filter_option = serializers.PrimaryKeyRelatedField(
+        queryset=CategoryFilterOption.objects.all(), required=False, allow_null=True
+    )
+    filter_value = serializers.CharField(source="filter_option.value", read_only=True, default=None)
+    image = serializers.ImageField(use_url=True)
+
+    class Meta:
+        model = Design
+        fields = [
+            "id",
+            "category",
+            "filter_option",
+            "filter_value",
+            "name",
+            "code",
+            "image",
+            "is_active",
+            "created_at",
+        ]
+
+    def validate(self, attrs):
+        category = attrs.get("category", getattr(self.instance, "category", None))
+        filter_option = attrs.get("filter_option", getattr(self.instance, "filter_option", None))
+        if filter_option and category and filter_option.category_id != category.id:
+            raise serializers.ValidationError(
+                {"filter_option": "Must belong to the selected category."}
+            )
+        return attrs

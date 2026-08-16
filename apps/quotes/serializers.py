@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.catalog.models import Category
 from apps.core.utils import generate_reference_code
 from apps.pricing.services import estimate_price
 
@@ -7,6 +8,10 @@ from .models import QuoteRequest
 
 
 class QuoteRequestCreateSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        slug_field="slug", queryset=Category.objects.all(), required=False, allow_null=True
+    )
+
     class Meta:
         model = QuoteRequest
         fields = [
@@ -18,6 +23,7 @@ class QuoteRequestCreateSerializer(serializers.ModelSerializer):
             "category",
             "product",
             "fabric",
+            "design",
             "quantity",
             "size_breakdown",
             "design_file",
@@ -52,6 +58,7 @@ class QuoteRequestAdminSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source="product.name", read_only=True, default=None)
     fabric_name = serializers.CharField(source="fabric.name", read_only=True, default=None)
     category_name = serializers.CharField(source="category.name", read_only=True, default=None)
+    category = serializers.SlugRelatedField(slug_field="slug", read_only=True)
 
     class Meta:
         model = QuoteRequest
@@ -68,6 +75,7 @@ class QuoteRequestAdminSerializer(serializers.ModelSerializer):
             "product_name",
             "fabric",
             "fabric_name",
+            "design",
             "quantity",
             "size_breakdown",
             "design_file",
@@ -89,6 +97,7 @@ class QuoteRequestAdminSerializer(serializers.ModelSerializer):
             "category",
             "product",
             "fabric",
+            "design",
             "quantity",
             "size_breakdown",
             "design_file",

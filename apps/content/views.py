@@ -115,6 +115,6 @@ class CompanyInfoView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         obj, _ = CompanyInfo.objects.get_or_create(
-            pk=1, defaults={"name": "Advergo Sports & Fashion Wear Ltd."}
+            pk=CompanyInfo.SINGLETON_ID, defaults={"name": "Advergo Sports & Fashion Wear Ltd."}
         )
         return obj

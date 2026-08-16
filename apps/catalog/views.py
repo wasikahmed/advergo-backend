@@ -2,10 +2,11 @@ from rest_framework import viewsets
 
 from apps.core.permissions import ReadOnlyOrAdmin
 
-from .filters import ProductFilter, SizeChartRowFilter
-from .models import Category, Fabric, Product, SizeChartRow
+from .filters import DesignFilter, ProductFilter, SizeChartRowFilter
+from .models import Category, Design, Fabric, Product, SizeChartRow
 from .serializers import (
     CategorySerializer,
+    DesignSerializer,
     FabricSerializer,
     ProductSerializer,
     SizeChartRowSerializer,
@@ -13,10 +14,11 @@ from .serializers import (
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.prefetch_related("filter_options")
     serializer_class = CategorySerializer
     permission_classes = [ReadOnlyOrAdmin]
     pagination_class = None
+    lookup_field = "slug"
 
 
 class FabricViewSet(viewsets.ModelViewSet):
@@ -42,3 +44,12 @@ class SizeChartRowViewSet(viewsets.ModelViewSet):
     permission_classes = [ReadOnlyOrAdmin]
     filterset_class = SizeChartRowFilter
     pagination_class = None
+
+
+class DesignViewSet(viewsets.ModelViewSet):
+    queryset = Design.objects.filter(deleted_at__isnull=True, is_active=True).select_related(
+        "category", "filter_option"
+    )
+    serializer_class = DesignSerializer
+    permission_classes = [ReadOnlyOrAdmin]
+    filterset_class = DesignFilter

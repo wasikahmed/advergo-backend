@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from apps.catalog.models import Category, Fabric, Product
+from apps.catalog.models import Category, Design, Fabric, Product
 from apps.core.models import TimeStampedModel
 from apps.core.storage import get_raw_file_storage
 from apps.core.validators import validate_design_file
@@ -49,13 +49,22 @@ class QuoteRequest(TimeStampedModel):
     fabric = models.ForeignKey(
         Fabric, null=True, blank=True, on_delete=models.SET_NULL, related_name="quote_requests"
     )
+    design = models.ForeignKey(
+        Design,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="quote_requests",
+        help_text="Set when the customer picked a design from the catalog instead of "
+        "uploading their own design_file.",
+    )
 
     quantity = models.PositiveIntegerField()
     size_breakdown = models.CharField(
         max_length=300, blank=True, help_text="e.g. 5xS, 10xM, 8xL, 2xXL"
     )
     design_file = models.FileField(
-        upload_to="quotes/",
+        upload_to="advergo/quotes/",
         blank=True,
         null=True,
         validators=[validate_design_file],

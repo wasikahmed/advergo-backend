@@ -402,7 +402,7 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        CompanyInfo.objects.update_or_create(pk=1, defaults=COMPANY)
+        CompanyInfo.objects.update_or_create(pk=CompanyInfo.SINGLETON_ID, defaults=COMPANY)
         self.stdout.write("  company info: 1")
 
         for order, row in enumerate(STATS):

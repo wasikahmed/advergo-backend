@@ -1,9 +1,16 @@
+import uuid
+
 from django.db import models
 
 
 class TimeStampedModel(models.Model):
-    """Adds created_at/updated_at to any model that inherits it."""
+    """Adds a UUID primary key plus created_at/updated_at to any model that
+    inherits it. UUIDs keep row identifiers non-enumerable (an order/invoice
+    id can't be guessed by incrementing a number) and safe to expose directly
+    in API URLs.
+    """
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.catalog.models import Category, Fabric, Product
+from apps.catalog.models import Category, CategoryFilterOption, Fabric, Product
 from apps.content.models import (
     Achievement,
     AchievementKind,
@@ -32,7 +32,43 @@ CATEGORIES = [
         "icon": "👔",
         "description": "Polo · T-Shirt · Jacket",
     },
+    # Design-collection categories (from the client brief): a continuously
+    # growing library of designs customers browse and pick from directly,
+    # separate from the sport-kit categories above. Each has its own filter
+    # set via CATEGORY_FILTER_OPTIONS below.
+    {"slug": "polo", "name": "Polo", "icon": "🎽", "description": "Full Sleeve · Half Sleeve"},
+    {
+        "slug": "round-neck",
+        "name": "Round Neck",
+        "icon": "👕",
+        "description": "Full Sleeve · Half Sleeve",
+    },
+    {
+        "slug": "v-neck",
+        "name": "V-Neck",
+        "icon": "👕",
+        "description": "Full Sleeve · Half Sleeve",
+    },
+    {
+        "slug": "winter-collection",
+        "name": "Winter Collection",
+        "icon": "🧥",
+        "description": "Jacket · Tracksuit · Trouser",
+    },
 ]
+
+# Filter pills shown on each design-collection category's browse page.
+# Sleeve length for the three shirt categories, garment type for Winter.
+CATEGORY_FILTER_OPTIONS = {
+    "polo": [("full-sleeve", "Full Sleeve"), ("half-sleeve", "Half Sleeve")],
+    "round-neck": [("full-sleeve", "Full Sleeve"), ("half-sleeve", "Half Sleeve")],
+    "v-neck": [("full-sleeve", "Full Sleeve"), ("half-sleeve", "Half Sleeve")],
+    "winter-collection": [
+        ("jacket", "Jacket"),
+        ("tracksuit", "Tracksuit"),
+        ("trouser", "Trouser"),
+    ],
+}
 
 FABRICS = [
     {
@@ -362,6 +398,17 @@ class Command(BaseCommand):
             categories[slug] = obj
         self.stdout.write(f"  categories: {len(categories)}")
 
+        filter_option_count = 0
+        for slug, options in CATEGORY_FILTER_OPTIONS.items():
+            for order, (value, label) in enumerate(options):
+                CategoryFilterOption.objects.update_or_create(
+                    category=categories[slug],
+                    value=value,
+                    defaults={"label": label, "order": order},
+                )
+                filter_option_count += 1
+        self.stdout.write(f"  category filter options: {filter_option_count}")
+
         for row in FABRICS:
             Fabric.objects.update_or_create(name=row["name"], defaults=row)
         self.stdout.write(f"  fabrics: {len(FABRICS)}")
@@ -414,7 +461,7 @@ class Command(BaseCommand):
             )
         self.stdout.write(f"  reviews: {len(REVIEWS)}")
 
-        CompanyInfo.objects.update_or_create(pk=1, defaults=COMPANY)
+        CompanyInfo.objects.update_or_create(pk=CompanyInfo.SINGLETON_ID, defaults=COMPANY)
         self.stdout.write("  company info: 1")
 
         # Only one demo banner is seeded -- clear stale rows from earlier runs
