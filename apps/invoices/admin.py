@@ -1,8 +1,13 @@
 from django.contrib import admin, messages
+from django.shortcuts import redirect
+from django.urls import reverse
 from unfold.admin import ModelAdmin
+from unfold.decorators import action
+
+from apps.core.utils import admin_action_redirect
 
 from .models import Chalan, Invoice, Quotation
-from .services import generate_and_send_invoice, generate_and_send_quotation, create_chalan
+from .services import create_chalan, generate_and_send_invoice, generate_and_send_quotation
 
 
 @admin.register(Invoice)
@@ -19,6 +24,7 @@ class InvoiceAdmin(ModelAdmin):
         "updated_at",
     ]
     actions = ["regenerate_and_send"]
+    actions_row = ["view_pdf_row", "regenerate_row"]
 
     def has_add_permission(self, request):
         # Only ever created via the generate action (renders the PDF, sets
@@ -32,6 +38,32 @@ class InvoiceAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_view_pdf_row_permission(self, request, object_id=None) -> bool:
+        if object_id is None:
+            return True
+        invoice = Invoice.objects.filter(pk=object_id).first()
+        return bool(invoice and invoice.pdf_file)
+
+    @action(description="View PDF", icon="visibility", attrs={"target": "_blank"})
+    def view_pdf_row(self, request, object_id):
+        invoice = self.get_object(request, object_id)
+        if invoice is None or not invoice.pdf_file:
+            self.message_user(request, "No PDF available.", level=messages.WARNING)
+            return admin_action_redirect(request, reverse("admin:invoices_invoice_changelist"))
+        return redirect(invoice.pdf_file.url)
+
+    @action(description="Regenerate & resend", icon="refresh")
+    def regenerate_row(self, request, object_id):
+        invoice = self.get_object(request, object_id)
+        if invoice is None:
+            self.message_user(request, "Invoice not found.", level=messages.ERROR)
+        else:
+            generate_and_send_invoice(invoice.order, generated_by=request.user)
+            self.message_user(
+                request, f"Generated a new invoice for {invoice.order.reference_code}.", level=messages.SUCCESS
+            )
+        return admin_action_redirect(request, reverse("admin:invoices_invoice_changelist"))
 
     @admin.action(description="Regenerate (new dated copy) and email to customer")
     def regenerate_and_send(self, request, queryset):
@@ -55,6 +87,7 @@ class QuotationAdmin(ModelAdmin):
         "updated_at",
     ]
     actions = ["regenerate_and_send"]
+    actions_row = ["view_pdf_row", "regenerate_row"]
 
     def has_add_permission(self, request):
         return False
@@ -64,6 +97,34 @@ class QuotationAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_view_pdf_row_permission(self, request, object_id=None) -> bool:
+        if object_id is None:
+            return True
+        quotation = Quotation.objects.filter(pk=object_id).first()
+        return bool(quotation and quotation.pdf_file)
+
+    @action(description="View PDF", icon="visibility", attrs={"target": "_blank"})
+    def view_pdf_row(self, request, object_id):
+        quotation = self.get_object(request, object_id)
+        if quotation is None or not quotation.pdf_file:
+            self.message_user(request, "No PDF available.", level=messages.WARNING)
+            return admin_action_redirect(request, reverse("admin:invoices_quotation_changelist"))
+        return redirect(quotation.pdf_file.url)
+
+    @action(description="Regenerate & resend", icon="refresh")
+    def regenerate_row(self, request, object_id):
+        quotation = self.get_object(request, object_id)
+        if quotation is None:
+            self.message_user(request, "Quotation not found.", level=messages.ERROR)
+        else:
+            generate_and_send_quotation(quotation.quote_request, generated_by=request.user)
+            self.message_user(
+                request,
+                f"Generated a new quotation for {quotation.quote_request.reference_code}.",
+                level=messages.SUCCESS,
+            )
+        return admin_action_redirect(request, reverse("admin:invoices_quotation_changelist"))
 
     @admin.action(description="Regenerate (new dated copy) and email to customer")
     def regenerate_and_send(self, request, queryset):
@@ -88,6 +149,7 @@ class ChalanAdmin(ModelAdmin):
         "updated_at",
     ]
     actions = ["regenerate_without_price", "regenerate_with_price"]
+    actions_row = ["view_pdf_row", "regenerate_row"]
 
     def has_add_permission(self, request):
         return False
@@ -97,6 +159,32 @@ class ChalanAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_view_pdf_row_permission(self, request, object_id=None) -> bool:
+        if object_id is None:
+            return True
+        chalan = Chalan.objects.filter(pk=object_id).first()
+        return bool(chalan and chalan.pdf_file)
+
+    @action(description="View PDF", icon="visibility", attrs={"target": "_blank"})
+    def view_pdf_row(self, request, object_id):
+        chalan = self.get_object(request, object_id)
+        if chalan is None or not chalan.pdf_file:
+            self.message_user(request, "No PDF available.", level=messages.WARNING)
+            return admin_action_redirect(request, reverse("admin:invoices_chalan_changelist"))
+        return redirect(chalan.pdf_file.url)
+
+    @action(description="Regenerate (same price setting)", icon="refresh")
+    def regenerate_row(self, request, object_id):
+        chalan = self.get_object(request, object_id)
+        if chalan is None:
+            self.message_user(request, "Chalan not found.", level=messages.ERROR)
+        else:
+            create_chalan(chalan.order, include_price=chalan.include_price, generated_by=request.user)
+            self.message_user(
+                request, f"Generated a new chalan for {chalan.order.reference_code}.", level=messages.SUCCESS
+            )
+        return admin_action_redirect(request, reverse("admin:invoices_chalan_changelist"))
 
     def _regenerate(self, request, queryset, *, include_price):
         orders = {chalan.order for chalan in queryset}

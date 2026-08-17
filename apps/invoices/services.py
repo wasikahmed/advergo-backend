@@ -1,3 +1,6 @@
+import base64
+from functools import lru_cache
+
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.mail import EmailMessage
@@ -14,6 +17,20 @@ def _get_company() -> CompanyInfo:
         pk=CompanyInfo.SINGLETON_ID, defaults={"name": "Advergo Sports & Fashion Wear Ltd."}
     )
     return company
+
+
+@lru_cache(maxsize=1)
+def _logo_data_uri() -> str:
+    """
+    Base64-inlined so WeasyPrint never has to resolve a URL or filesystem
+    path for it -- it renders server-side with no request context, and
+    static assets are served by Whitenoise/Cloudinary depending on
+    environment, so a plain <img src="/static/..."> isn't reliably
+    reachable from there. Cached: it's the same 14KB file on every PDF.
+    """
+    path = settings.BASE_DIR / "static" / "branding" / "icon.png"
+    data = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{data}"
 
 
 def _numbered(prefix: str, reference_code: str, order_prefix: str, existing_count: int) -> str:
@@ -48,6 +65,7 @@ def render_invoice_pdf_bytes(order, invoice_number: str | None = None) -> bytes:
         {
             "order": order,
             "company": _get_company(),
+            "logo_data_uri": _logo_data_uri(),
             "invoice_number": invoice_number or generate_invoice_number(order),
             "issued_date": timezone.now().strftime("%d %B, %Y"),
             "due_amount": order.due_amount,
@@ -111,6 +129,7 @@ def render_quotation_pdf_bytes(quote, quotation_number: str | None = None) -> by
         {
             "quote": quote,
             "company": _get_company(),
+            "logo_data_uri": _logo_data_uri(),
             "quotation_number": quotation_number or generate_quotation_number(quote),
             "issued_date": timezone.now().strftime("%d %B, %Y"),
             "quoted_total": quoted_total,
@@ -175,6 +194,7 @@ def render_chalan_pdf_bytes(order, chalan_number: str | None = None, *, include_
         {
             "order": order,
             "company": _get_company(),
+            "logo_data_uri": _logo_data_uri(),
             "chalan_number": chalan_number or generate_chalan_number(order),
             "issued_date": timezone.now().strftime("%d %B, %Y"),
             "include_price": include_price,

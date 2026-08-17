@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib import admin, messages
+from django.http import HttpResponse
 from django.urls import reverse
 from simple_history.admin import SimpleHistoryAdmin
 from unfold.admin import ModelAdmin, TabularInline
@@ -91,7 +92,7 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
     autocomplete_fields = ["category", "product", "fabric", "design", "user"]
     inlines = [QuotationInline]
     actions = ["generate_and_send_quotation"]
-    actions_row = ["convert_to_order_row"]
+    actions_row = ["preview_quotation_row", "convert_to_order_row"]
 
     _submitted_fields = [
         "user",
@@ -135,6 +136,17 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
             obj.estimated_price_low = estimate.unit_price_low * obj.quantity
             obj.estimated_price_high = estimate.unit_price_high * obj.quantity
         super().save_model(request, obj, form, change)
+
+    @action(description="Preview quotation PDF", icon="visibility", attrs={"target": "_blank"})
+    def preview_quotation_row(self, request, object_id):
+        from apps.invoices.services import render_quotation_pdf_bytes
+
+        quote = self.get_object(request, object_id)
+        if quote is None:
+            return HttpResponse("Quote not found.", status=404)
+        response = HttpResponse(render_quotation_pdf_bytes(quote), content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{quote.reference_code}-preview.pdf"'
+        return response
 
     def has_convert_to_order_row_permission(self, request, object_id=None) -> bool:
         if object_id is None:

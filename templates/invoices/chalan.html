@@ -6,10 +6,13 @@
   @page { size: A4; margin: 2cm 1.8cm; }
   body { font-family: "Noto Sans Bengali", "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 12px; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #eb2127; padding-bottom: 14px; margin-bottom: 22px; }
-  .company-name { font-size: 18px; font-weight: bold; color: #010101; margin: 0 0 4px; }
+  .company-block { display: flex; align-items: center; gap: 12px; }
+  .company-logo { width: 44px; height: 44px; flex-shrink: 0; }
+  .company-name { font-size: 15px; font-weight: bold; color: #010101; margin: 0 0 4px; white-space: nowrap; }
   .company-detail { color: #555; font-size: 10.5px; line-height: 1.6; }
-  .doc-title { text-align: right; }
-  .doc-title h1 { font-size: 22px; color: #eb2127; margin: 0; letter-spacing: 1px; }
+  .doc-title { text-align: right; flex-shrink: 0; }
+  .doc-title h1 { font-size: 20px; color: #eb2127; margin: 0; letter-spacing: 0.5px; }
+  .doc-title .doc-title-bn { font-size: 13px; color: #eb2127; margin: 1px 0 0; font-family: "Noto Sans Bengali", sans-serif; }
   .doc-title p { margin: 2px 0; color: #555; font-size: 10.5px; }
   .parties { width: 100%; margin-bottom: 20px; border-collapse: collapse; }
   .parties td { vertical-align: top; padding: 12px; width: 50%; border: 1px solid #eee; background: #fafafa; }
@@ -37,16 +40,20 @@
 </head>
 <body>
   <div class="header">
-    <div>
-      <p class="company-name">{{ company.name }}</p>
-      <div class="company-detail">
-        {{ company.head_office }}<br />
-        {{ company.phone }} &middot; {{ company.email }}
-        {% if company.trade_license_no %}<br />ট্রেড লাইসেন্স: {{ company.trade_license_no }}{% endif %}
+    <div class="company-block">
+      {% if logo_data_uri %}<img class="company-logo" src="{{ logo_data_uri }}" alt="" />{% endif %}
+      <div>
+        <p class="company-name">{{ company.name }}</p>
+        <div class="company-detail">
+          {{ company.head_office }}<br />
+          {{ company.phone }} &middot; {{ company.email }}
+          {% if company.trade_license_no %}<br />ট্রেড লাইসেন্স: {{ company.trade_license_no }}{% endif %}
+        </div>
       </div>
     </div>
     <div class="doc-title">
-      <h1>চালান</h1>
+      <h1>DELIVERY CHALLAN</h1>
+      <p class="doc-title-bn">চালান</p>
       <p>{{ chalan_number }}</p>
       <p>{{ issued_date }}</p>
     </div>

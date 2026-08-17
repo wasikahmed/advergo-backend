@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.http import HttpResponse
 from django.urls import reverse
 from simple_history.admin import SimpleHistoryAdmin
 from unfold.admin import ModelAdmin, TabularInline
@@ -76,7 +77,37 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         "generate_chalan_without_price",
         "generate_chalan_with_price",
     ]
-    actions_row = ["advance_status_row", "cancel_order_row", "generate_invoice_row"]
+    actions_row = [
+        "preview_invoice_row",
+        "preview_chalan_row",
+        "advance_status_row",
+        "cancel_order_row",
+        "generate_invoice_row",
+    ]
+
+    @action(description="Preview invoice PDF", icon="visibility", attrs={"target": "_blank"})
+    def preview_invoice_row(self, request, object_id):
+        from apps.invoices.services import render_invoice_pdf_bytes
+
+        order = self.get_object(request, object_id)
+        if order is None:
+            return HttpResponse("Order not found.", status=404)
+        response = HttpResponse(render_invoice_pdf_bytes(order), content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{order.reference_code}-invoice-preview.pdf"'
+        return response
+
+    @action(description="Preview chalan PDF", icon="local_shipping", attrs={"target": "_blank"})
+    def preview_chalan_row(self, request, object_id):
+        from apps.invoices.services import render_chalan_pdf_bytes
+
+        order = self.get_object(request, object_id)
+        if order is None:
+            return HttpResponse("Order not found.", status=404)
+        response = HttpResponse(
+            render_chalan_pdf_bytes(order, include_price=False), content_type="application/pdf"
+        )
+        response["Content-Disposition"] = f'inline; filename="{order.reference_code}-chalan-preview.pdf"'
+        return response
 
     def has_advance_status_row_permission(self, request, object_id=None) -> bool:
         if object_id is None:

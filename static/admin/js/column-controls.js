@@ -1,9 +1,14 @@
 /*
- * Per-changelist column show/hide + drag-to-resize for the Django admin
- * (Unfold theme). Unfold doesn't ship this, and some of our tables
- * (Quote requests, Orders) have enough columns that the row-actions menu
- * ends up off-screen. State is remembered per URL path in localStorage so
- * it survives reloads/filtering but doesn't leak between different models.
+ * Changelist UX enhancements for the Django admin (Unfold theme), none of
+ * which Unfold ships on its own:
+ *  - per-column show/hide + drag-to-resize (some tables have enough
+ *    columns that the row-actions menu ends up off-screen)
+ *  - a "Select" toggle that hides the bulk-selection checkboxes (and the
+ *    bulk action bar) until turned on, so browsing the list isn't
+ *    cluttered with always-visible checkboxes on every row
+ * Column state is remembered per URL path in localStorage; select mode
+ * intentionally isn't persisted -- like Gmail/Notion, it resets on
+ * reload/navigation rather than staying stuck on.
  */
 (function () {
     "use strict";
@@ -128,6 +133,56 @@
         return wrap;
     }
 
+    function buildSelectModeToggle(table) {
+        var headerCell = table.querySelector("thead th.action-checkbox-column");
+        var bodyCells = Array.prototype.slice.call(table.querySelectorAll("td.action-checkbox"));
+        var actionsBar = document.getElementById("changelist-actions");
+        if (!headerCell && bodyCells.length === 0) return null;
+
+        var selecting = false;
+
+        function apply() {
+            var display = selecting ? "" : "none";
+            if (headerCell) headerCell.style.display = display;
+            bodyCells.forEach(function (cell) {
+                cell.style.display = display;
+            });
+            if (actionsBar) actionsBar.style.display = selecting ? "" : "none";
+        }
+
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "Select";
+        btn.className =
+            "text-xs font-medium border border-base-200 dark:border-base-700 rounded-default " +
+            "px-3 py-1.5 hover:bg-base-50 dark:hover:bg-base-800 bg-white dark:bg-base-900";
+
+        btn.addEventListener("click", function () {
+            selecting = !selecting;
+            btn.classList.toggle("bg-primary-600", selecting);
+            btn.classList.toggle("text-white", selecting);
+            btn.classList.toggle("border-primary-600", selecting);
+            btn.classList.toggle("dark:bg-primary-600", selecting);
+            btn.classList.toggle("hover:bg-primary-600", selecting);
+            apply();
+
+            // Leaving select mode with items still checked would hide an
+            // active bulk-action bar behind a collapsed toggle with no
+            // visible way to tell selections are still live -- clear them.
+            if (!selecting) {
+                var checkboxes = table.querySelectorAll('input[name="_selected_action"]:checked');
+                checkboxes.forEach(function (cb) {
+                    cb.checked = false;
+                });
+                var selectAll = table.querySelector("#action-toggle");
+                if (selectAll) selectAll.checked = false;
+            }
+        });
+
+        apply();
+        return btn;
+    }
+
     function attachResizeHandle(col, bodyRows, state) {
         var handle = document.createElement("div");
         handle.className = "column-resize-handle";
@@ -168,14 +223,21 @@
 
         var bodyRows = Array.prototype.slice.call(table.querySelectorAll("tbody tr.data-row"));
         var columns = buildColumns(theadRow);
-        if (columns.length === 0) return;
-
         var state = loadState();
 
         var toolbar = document.createElement("div");
-        toolbar.className = "flex items-center justify-end mb-2";
-        toolbar.appendChild(buildTogglePanel(columns, bodyRows, state));
-        wrapper.parentElement.insertBefore(toolbar, wrapper);
+        toolbar.className = "flex items-center justify-end gap-2 mb-2";
+
+        var selectToggle = buildSelectModeToggle(table);
+        if (selectToggle) toolbar.appendChild(selectToggle);
+
+        if (columns.length > 0) {
+            toolbar.appendChild(buildTogglePanel(columns, bodyRows, state));
+        }
+
+        if (selectToggle || columns.length > 0) {
+            wrapper.parentElement.insertBefore(toolbar, wrapper);
+        }
 
         columns.forEach(function (col) {
             attachResizeHandle(col, bodyRows, state);
