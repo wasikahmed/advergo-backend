@@ -337,6 +337,7 @@ UNFOLD = {
     ],
     "SCRIPTS": [
         lambda request: static("admin/js/column-controls.js"),
+        lambda request: static("admin/js/user-autocomplete.js"),
     ],
     # Setting this list at all replaces Unfold's default "Change password"
     # link in the account dropdown rather than adding alongside it, so it

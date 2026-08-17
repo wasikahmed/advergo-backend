@@ -12,6 +12,6 @@
             {% if circle %}rounded-full after:rounded-full{% else %}rounded-default after:rounded-default{% endif %}"
      {% if avatar_url %}style="background-image: url('{{ avatar_url }}');"{% endif %}>
     {% if not avatar_url %}
-        {{ user.get_full_name.0|default:user.get_username.0|upper }}
+        {{ user.get_full_name|default:user|stringformat:"s"|slice:":1"|upper }}
     {% endif %}
 </div>

@@ -132,3 +132,19 @@ def test_resend_row_action_skips_accepted_invite(admin_client, group, settings):
     invite.refresh_from_db()
     assert invite.token == old_token
     assert len(mail.outbox) == 0
+
+
+def test_get_full_name_returns_full_name_field():
+    user = UserFactory(full_name="Jane Doe")
+    assert user.get_full_name() == "Jane Doe"
+    assert user.get_short_name() == "Jane Doe"
+
+
+def test_user_changelist_shows_avatar_chip(admin_client):
+    client, admin = admin_client
+    UserFactory(full_name="Chip Person", email="chip@example.com")
+
+    response = client.get(reverse("admin:users_user_changelist"))
+
+    assert response.status_code == 200
+    assert "Chip Person" in response.content.decode()

@@ -1,6 +1,8 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
+from apps.core.admin_utils import user_chip
+
 from .models import ActivityLog, LoginEvent
 
 
@@ -42,7 +44,7 @@ class ReadOnlyAdminMixin:
 class LoginEventAdmin(ReadOnlyAdminMixin, ModelAdmin):
     list_display = [
         "created_at",
-        "user",
+        "user_display",
         "identifier",
         "channel",
         "success",
@@ -74,10 +76,14 @@ class LoginEventAdmin(ReadOnlyAdminMixin, ModelAdmin):
         "created_at",
     ]
 
+    @admin.display(description="User", ordering="user")
+    def user_display(self, obj):
+        return user_chip(obj.user)
+
 
 @admin.register(ActivityLog)
 class ActivityLogAdmin(ReadOnlyAdminMixin, ModelAdmin):
-    list_display = ["created_at", "actor", "verb", "content_type", "object_repr"]
+    list_display = ["created_at", "actor_display", "verb", "content_type", "object_repr"]
     list_filter = ["verb", "content_type", ActivityAccountTypeFilter]
     search_fields = ["actor__email", "actor__full_name", "object_repr", "description"]
     autocomplete_fields = ["actor"]
@@ -92,3 +98,7 @@ class ActivityLogAdmin(ReadOnlyAdminMixin, ModelAdmin):
         "ip_address",
         "created_at",
     ]
+
+    @admin.display(description="Actor", ordering="actor")
+    def actor_display(self, obj):
+        return user_chip(obj.actor)

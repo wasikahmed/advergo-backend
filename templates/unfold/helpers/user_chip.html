@@ -1,0 +1,12 @@
+{% comment %}Avatar + name, used anywhere a user's identity is shown in a
+list_display column (Login events, Activity log, Users). Reuses the same
+avatar.html the sidebar/topbar already use, so an uploaded profile photo
+shows up consistently everywhere.{% endcomment %}
+{% if user %}
+    <div class="flex items-center gap-2">
+        {% include "unfold/helpers/avatar.html" with user=user size="xs" circle=1 %}
+        <span class="truncate">{{ user.get_full_name|default:user }}</span>
+    </div>
+{% else %}
+    <span class="text-subtle">&mdash;</span>
+{% endif %}

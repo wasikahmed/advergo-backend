@@ -12,6 +12,7 @@ from unfold.decorators import action
 from unfold.forms import UserChangeForm, UserCreationForm
 
 from apps.activity.services import log_activity
+from apps.core.admin_utils import user_chip
 
 from .invites import send_staff_invite_email
 from .models import StaffInvite, User
@@ -24,9 +25,13 @@ class UserAdmin(SimpleHistoryAdmin, ModelAdmin, DjangoUserAdmin):
 
     model = User
     ordering = ["-created_at"]
-    list_display = ["email", "phone", "full_name", "is_staff", "is_active", "created_at"]
+    list_display = ["user_display", "email", "phone", "is_staff", "is_active", "created_at"]
     list_filter = ["is_staff", "is_active", "groups"]
     search_fields = ["email", "phone", "full_name"]
+
+    @admin.display(description="User", ordering="full_name")
+    def user_display(self, obj):
+        return user_chip(obj)
 
     fieldsets = (
         (None, {"fields": ("email", "phone", "password")}),
