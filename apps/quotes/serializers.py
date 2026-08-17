@@ -3,6 +3,7 @@ from rest_framework import serializers
 from apps.catalog.models import Category
 from apps.core.utils import generate_reference_code
 from apps.pricing.services import estimate_price
+from apps.users.services import get_or_create_guest_user
 
 from .models import QuoteRequest
 
@@ -38,6 +39,14 @@ class QuoteRequestCreateSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request is not None and request.user.is_authenticated:
             validated_data["user"] = request.user
+        else:
+            # Guest submission -- attach it to an existing account if the
+            # email/phone matches one, otherwise create an inactive shell so
+            # this quote (and everything that follows from it) has an
+            # account to hang off of from day one.
+            validated_data["user"] = get_or_create_guest_user(
+                email=validated_data.get("email", ""), phone=validated_data.get("phone", "")
+            )
 
         estimate = estimate_price(
             fabric=validated_data.get("fabric"),

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from apps.catalog.models import Category, Design, Fabric, Product
 from apps.core.models import TimeStampedModel
@@ -98,6 +99,8 @@ class QuoteRequest(TimeStampedModel):
     admin_notes = models.TextField(
         blank=True, help_text="Internal only -- never shown to the customer."
     )
+
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["-created_at"]

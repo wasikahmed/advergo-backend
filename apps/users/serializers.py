@@ -17,7 +17,15 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "phone", "full_name", "password"]
-        extra_kwargs = {"phone": {"required": False}}
+        # validators=[] on both: disables DRF's auto-added UniqueValidator
+        # (which would reject before the view even runs) -- RegisterView
+        # does its own uniqueness check, since an email/phone match against
+        # an inactive shell account isn't a plain rejection, it's routed
+        # into the claim-account flow instead.
+        extra_kwargs = {
+            "phone": {"required": False, "validators": []},
+            "email": {"validators": []},
+        }
 
     def validate(self, attrs):
         if not attrs.get("email") and not attrs.get("phone"):

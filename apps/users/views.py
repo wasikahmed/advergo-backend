@@ -52,8 +52,59 @@ def _tokens_for_user(user):
 
 
 class RegisterView(generics.CreateAPIView):
+    """
+    A normal signup, unless the email/phone already belongs to an inactive
+    "shell" account (created earlier from a guest quote -- see
+    apps.users.services.get_or_create_guest_user). In that case this isn't
+    a new account at all, it's *their* existing history -- routed through
+    the same secure "prove you own this email" flow as password reset
+    instead of letting anyone claim it by simply typing a password.
+    """
+
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data.get("email")
+        phone = serializer.validated_data.get("phone")
+
+        existing = None
+        if email:
+            existing = User.objects.filter(email__iexact=email).first()
+        if existing is None and phone:
+            existing = User.objects.filter(phone=phone).first()
+
+        if existing is not None and existing.is_active:
+            raise ValidationError(
+                {"email": "An account with this email or phone already exists. Log in instead."}
+            )
+
+        if existing is not None:
+            # Inactive shell. Phone-only shells can't be claimed yet --
+            # phone OTP delivery isn't wired up to a real SMS provider.
+            if not existing.email:
+                return Response(
+                    {
+                        "detail": "An account already exists for this phone number. Phone "
+                        "activation isn't available yet -- please contact support."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            send_password_reset_email(existing)
+            return Response(
+                {
+                    "detail": "We found an existing account for this email. Check your inbox "
+                    "for a link to activate it.",
+                    "accountExists": True,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class LoginView(TokenObtainPairView):
@@ -171,7 +222,14 @@ class PasswordResetConfirmView(generics.GenericAPIView):
 
         user = serializer.validated_data["user"]
         user.set_password(serializer.validated_data["new_password"])
-        user.save(update_fields=["password"])
+        update_fields = ["password"]
+        # Same link doubles as the "claim your account" flow for an
+        # inactive shell (see RegisterView) -- proving email ownership and
+        # setting a password *is* the activation moment there too.
+        if not user.is_active:
+            user.is_active = True
+            update_fields.append("is_active")
+        user.save(update_fields=update_fields)
 
         return Response({"detail": "Password updated."})
 
@@ -218,11 +276,26 @@ class GoogleLoginView(generics.GenericAPIView):
         if created:
             user.set_unusable_password()
             user.save(update_fields=["password"])
-        elif payload.get("picture") and user.avatar_url != payload["picture"]:
-            # Google's photo URL can change over time -- keep it fresh on
-            # every login rather than only capturing it once at signup.
-            user.avatar_url = payload["picture"]
-            user.save(update_fields=["avatar_url"])
+        else:
+            # Matched an existing account -- possibly an inactive "shell"
+            # created from a guest quote (see apps.users.services). Google
+            # has already verified this person owns the email, so this
+            # *is* the activation moment -- no separate claim step needed,
+            # unlike the password-based register flow.
+            update_fields = []
+            if not user.is_active:
+                user.is_active = True
+                update_fields.append("is_active")
+            if not user.full_name and payload.get("name"):
+                user.full_name = payload["name"]
+                update_fields.append("full_name")
+            if payload.get("picture") and user.avatar_url != payload["picture"]:
+                # Google's photo URL can change over time -- keep it fresh
+                # on every login rather than only capturing it once.
+                user.avatar_url = payload["picture"]
+                update_fields.append("avatar_url")
+            if update_fields:
+                user.save(update_fields=update_fields)
 
         if user.is_staff:
             challenge_id = create_and_send_login_2fa_otp(user)

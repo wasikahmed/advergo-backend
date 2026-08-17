@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 from apps.catalog.models import Category, Design, Fabric, Product
 from apps.core.models import TimeStampedModel
@@ -78,6 +79,8 @@ class Order(TimeStampedModel):
         on_delete=models.SET_NULL,
         related_name="orders_created",
     )
+
+    history = HistoricalRecords()
 
     class Meta:
         ordering = ["-created_at"]

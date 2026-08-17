@@ -45,7 +45,12 @@ def test_guest_can_submit_quote_request(api_client, category, fabric):
 
     quote = QuoteRequest.objects.get(reference_code=body["referenceCode"])
     assert quote.status == QuoteRequestStatus.PENDING
-    assert quote.user is None
+    # Guest submissions get an inactive shell account attached (not None) --
+    # this is what all their history hangs off of until they claim it.
+    assert quote.user is not None
+    assert quote.user.email == "rafiq@example.com"
+    assert quote.user.is_active is False
+    assert not quote.user.has_usable_password()
 
 
 def test_submission_requires_name_phone_quantity(api_client):

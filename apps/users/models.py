@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser, Group, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+from simple_history.models import HistoricalRecords
 
 from apps.core.models import TimeStampedModel
 
@@ -33,6 +34,11 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+    # Who/when for every change (e.g. is_active flipping True on account
+    # claim, an admin changing a group) -- password excluded since a hash
+    # snapshot per change isn't useful and needlessly widens the blast
+    # radius if the history table were ever exposed.
+    history = HistoricalRecords(excluded_fields=["password"])
 
     class Meta:
         ordering = ["-created_at"]
