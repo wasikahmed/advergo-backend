@@ -29,10 +29,24 @@
         </div>
     </form>
 
-    <form method="post" class="mt-3">
-        {% csrf_token %}
-        <button type="submit" name="resend" value="1" class="text-sm text-base-500 hover:text-base-700 dark:text-base-400 dark:hover:text-base-200 underline">
-            Resend code
-        </button>
-    </form>
+    <div class="flex items-center gap-4 mt-3">
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" name="resend" value="1" class="text-sm text-base-500 hover:text-base-700 dark:text-base-400 dark:hover:text-base-200 underline">
+                Resend code
+            </button>
+        </form>
+
+        <span class="text-base-300 dark:text-base-600">&middot;</span>
+
+        {# The password step already created a real Django session -- there's no "back" #}
+        {# from here short of ending it, since any other /admin/ page just bounces back #}
+        {# to this same screen until it's verified. #}
+        <form method="post" action="{% url 'admin:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="text-sm text-base-500 hover:text-base-700 dark:text-base-400 dark:hover:text-base-200 underline">
+                Not you? Log out
+            </button>
+        </form>
+    </div>
 {% endblock %}

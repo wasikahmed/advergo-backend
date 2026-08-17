@@ -40,9 +40,26 @@ class ReadOnlyAdminMixin:
 
 @admin.register(LoginEvent)
 class LoginEventAdmin(ReadOnlyAdminMixin, ModelAdmin):
-    list_display = ["created_at", "user", "identifier", "channel", "success", "ip_address"]
+    list_display = [
+        "created_at",
+        "user",
+        "identifier",
+        "channel",
+        "success",
+        "ip_address",
+        "location",
+        "device",
+    ]
     list_filter = ["success", "channel", LoginAccountTypeFilter]
-    search_fields = ["identifier", "user__email", "user__phone", "user__full_name", "ip_address"]
+    search_fields = [
+        "identifier",
+        "user__email",
+        "user__phone",
+        "user__full_name",
+        "ip_address",
+        "device",
+        "location",
+    ]
     autocomplete_fields = ["user"]
     date_hierarchy = "created_at"
     readonly_fields = [
@@ -51,6 +68,8 @@ class LoginEventAdmin(ReadOnlyAdminMixin, ModelAdmin):
         "channel",
         "success",
         "ip_address",
+        "location",
+        "device",
         "user_agent",
         "created_at",
     ]

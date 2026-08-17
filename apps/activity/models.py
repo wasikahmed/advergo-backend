@@ -34,6 +34,12 @@ class LoginEvent(models.Model):
     success = models.BooleanField()
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.CharField(max_length=500, blank=True)
+    # Parsed once at write time (from user_agent) rather than re-parsed on
+    # every page view -- keeps a historical row's displayed device stable
+    # even if the parsing library's rules change later, and makes it
+    # filterable/searchable as plain text.
+    device = models.CharField(max_length=255, blank=True)
+    location = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
