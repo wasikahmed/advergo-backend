@@ -6,6 +6,7 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
+from simple_history.admin import SimpleHistoryAdmin
 from unfold.admin import ModelAdmin
 from unfold.decorators import action
 from unfold.forms import UserChangeForm, UserCreationForm
@@ -15,7 +16,7 @@ from .models import StaffInvite, User
 
 
 @admin.register(User)
-class UserAdmin(ModelAdmin, DjangoUserAdmin):
+class UserAdmin(SimpleHistoryAdmin, ModelAdmin, DjangoUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
 

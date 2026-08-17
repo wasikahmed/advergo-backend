@@ -1,0 +1,72 @@
+/* Wide changelist tables (Quote requests, Orders, ...): keep inline-edit
+   selects (e.g. the Status dropdown) from truncating to "Co...", and give
+   the per-column resize handle injected by column-controls.js something to
+   grab. */
+#result_list select {
+    min-width: 130px;
+}
+
+#result_list th[class*="column-"] {
+    position: relative;
+}
+
+.column-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -5px;
+    bottom: 0;
+    width: 11px;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.column-resize-handle:hover,
+.column-resize-handle.is-resizing {
+    background: rgba(200, 38, 44, 0.15);
+}
+
+/* Grip icon -- two short vertical bars, like a spreadsheet column-resize
+   affordance -- so the draggable edge is visible without hovering first. */
+.column-resize-handle::before,
+.column-resize-handle::after {
+    content: "";
+    display: block;
+    width: 1.5px;
+    height: 12px;
+    margin: 0 1px;
+    border-radius: 1px;
+    background: currentColor;
+    color: rgb(161 161 170); /* base-400, matches the row-actions "..." icon */
+    opacity: 0.6;
+}
+
+.column-resize-handle:hover::before,
+.column-resize-handle:hover::after,
+.column-resize-handle.is-resizing::before,
+.column-resize-handle.is-resizing::after {
+    color: rgb(200 38 44); /* brand red, same as the primary accent */
+    opacity: 1;
+}
+
+:root:not([data-theme="light"]) .column-resize-handle::before,
+:root:not([data-theme="light"]) .column-resize-handle::after {
+    color: rgb(113 113 122); /* base-500 dark */
+}
+:root[data-theme="dark"] .column-resize-handle::before,
+:root[data-theme="dark"] .column-resize-handle::after {
+    color: rgb(113 113 122);
+}
+
+.column-toggle-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 50;
+    min-width: 220px;
+    max-height: 320px;
+    overflow-y: auto;
+}

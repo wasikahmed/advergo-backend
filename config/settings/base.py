@@ -3,6 +3,8 @@ from pathlib import Path
 
 import environ
 from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -55,6 +57,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "django_filters",
     "drf_spectacular",
+    "simple_history",
 ]
 
 LOCAL_APPS = [
@@ -88,6 +91,9 @@ MIDDLEWARE = [
     "apps.users.admin_2fa_middleware.AdminTwoFactorMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Populates HistoricalRecords.history_user automatically from the
+    # request -- without this, every .save() needs _history_user set by hand.
+    "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -307,6 +313,12 @@ UNFOLD = {
     ],
     # Swap Unfold's default violet accent for the storefront's brand red
     # (same hex values as --color-brand-red/-dark/-deep in the frontend).
+    "STYLES": [
+        lambda request: static("admin/css/column-controls.css"),
+    ],
+    "SCRIPTS": [
+        lambda request: static("admin/js/column-controls.js"),
+    ],
     "COLORS": {
         "primary": {
             "50": "#fdf2f2",
@@ -321,6 +333,222 @@ UNFOLD = {
             "900": "#4a0a0d",
             "950": "#2e0608",
         },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": False,
+        "navigation": [
+            {
+                "title": None,
+                "collapsible": False,
+                "items": [
+                    {
+                        "title": _("Dashboard"),
+                        "icon": "dashboard",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                ],
+            },
+            {
+                "title": _("Sales"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Quote requests"),
+                        "icon": "request_quote",
+                        "link": reverse_lazy("admin:quotes_quoterequest_changelist"),
+                    },
+                    {
+                        "title": _("Orders"),
+                        "icon": "shopping_cart",
+                        "link": reverse_lazy("admin:orders_order_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Documents"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Invoices"),
+                        "icon": "receipt_long",
+                        "link": reverse_lazy("admin:invoices_invoice_changelist"),
+                    },
+                    {
+                        "title": _("Quotations"),
+                        "icon": "description",
+                        "link": reverse_lazy("admin:invoices_quotation_changelist"),
+                    },
+                    {
+                        "title": _("Chalans"),
+                        "icon": "local_shipping",
+                        "link": reverse_lazy("admin:invoices_chalan_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Catalog"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Categories"),
+                        "icon": "category",
+                        "link": reverse_lazy("admin:catalog_category_changelist"),
+                    },
+                    {
+                        "title": _("Products"),
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:catalog_product_changelist"),
+                    },
+                    {
+                        "title": _("Fabrics"),
+                        "icon": "texture",
+                        "link": reverse_lazy("admin:catalog_fabric_changelist"),
+                    },
+                    {
+                        "title": _("Designs"),
+                        "icon": "palette",
+                        "link": reverse_lazy("admin:catalog_design_changelist"),
+                    },
+                    {
+                        "title": _("Size chart rows"),
+                        "icon": "straighten",
+                        "link": reverse_lazy("admin:catalog_sizechartrow_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Pricing"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Fabric price rules"),
+                        "icon": "payments",
+                        "link": reverse_lazy("admin:pricing_fabricpricerule_changelist"),
+                    },
+                    {
+                        "title": _("Category price rules"),
+                        "icon": "payments",
+                        "link": reverse_lazy("admin:pricing_categorypricerule_changelist"),
+                    },
+                    {
+                        "title": _("Quantity discount tiers"),
+                        "icon": "percent",
+                        "link": reverse_lazy("admin:pricing_quantitydiscounttier_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Site content"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Banners"),
+                        "icon": "view_carousel",
+                        "link": reverse_lazy("admin:content_banner_changelist"),
+                    },
+                    {
+                        "title": _("Home section banners"),
+                        "icon": "view_carousel",
+                        "link": reverse_lazy("admin:content_homesectionbanner_changelist"),
+                    },
+                    {
+                        "title": _("Stats"),
+                        "icon": "bar_chart",
+                        "link": reverse_lazy("admin:content_stat_changelist"),
+                    },
+                    {
+                        "title": _("Achievements"),
+                        "icon": "military_tech",
+                        "link": reverse_lazy("admin:content_achievement_changelist"),
+                    },
+                    {
+                        "title": _("Client logos"),
+                        "icon": "business",
+                        "link": reverse_lazy("admin:content_clientlogo_changelist"),
+                    },
+                    {
+                        "title": _("Team members"),
+                        "icon": "groups",
+                        "link": reverse_lazy("admin:content_teammember_changelist"),
+                    },
+                    {
+                        "title": _("Bank accounts"),
+                        "icon": "account_balance",
+                        "link": reverse_lazy("admin:content_bankaccount_changelist"),
+                    },
+                    {
+                        "title": _("Mobile banking agents"),
+                        "icon": "smartphone",
+                        "link": reverse_lazy("admin:content_mobilebankingagent_changelist"),
+                    },
+                    {
+                        "title": _("Official documents"),
+                        "icon": "gavel",
+                        "link": reverse_lazy("admin:content_officialdocument_changelist"),
+                    },
+                    {
+                        "title": _("Process steps"),
+                        "icon": "linear_scale",
+                        "link": reverse_lazy("admin:content_processstep_changelist"),
+                    },
+                    {
+                        "title": _("Gallery categories"),
+                        "icon": "collections",
+                        "link": reverse_lazy("admin:content_gallerycategory_changelist"),
+                    },
+                    {
+                        "title": _("Gallery items"),
+                        "icon": "photo_library",
+                        "link": reverse_lazy("admin:content_galleryitem_changelist"),
+                    },
+                    {
+                        "title": _("Company info"),
+                        "icon": "info",
+                        "link": reverse_lazy("admin:content_companyinfo_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Customers"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Reviews"),
+                        "icon": "reviews",
+                        "link": reverse_lazy("admin:reviews_review_changelist"),
+                    },
+                    {
+                        "title": _("Wishlist items"),
+                        "icon": "favorite",
+                        "link": reverse_lazy("admin:wishlist_wishlistitem_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Users & access"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Users"),
+                        "icon": "group",
+                        "link": reverse_lazy("admin:users_user_changelist"),
+                    },
+                    {
+                        "title": _("Staff invites"),
+                        "icon": "mail",
+                        "link": reverse_lazy("admin:users_staffinvite_changelist"),
+                    },
+                ],
+            },
+        ],
     },
 }
 
