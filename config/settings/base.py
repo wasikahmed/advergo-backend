@@ -96,6 +96,15 @@ MIDDLEWARE = [
     "simple_history.middleware.HistoryRequestMiddleware",
 ]
 
+# Django's SecurityMiddleware default ("same-origin") severs window.opener
+# on any popup the page opens -- which breaks the admin's Google Sign-In
+# button, since Google's popup relays the credential back via that
+# reference once you pick an account. "same-origin-allow-popups" keeps the
+# same cross-origin isolation otherwise, it just lets popups we open keep
+# their opener link (Google's own documented fix for this exact symptom:
+# the popup opens, the account picker works, then it hangs).
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin-allow-popups"
+
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [

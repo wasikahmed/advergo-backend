@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
+from .admin_2fa import SESSION_VERIFIED_KEY
 from .google_auth import InvalidGoogleToken, verify_google_id_token
 from .models import User
 
@@ -18,10 +19,11 @@ def admin_google_login(request):
     Sign-in-with-Google for the Django admin login page. Unlike the
     customer-facing API login, this never creates an account -- it only
     authenticates an *existing* staff user, matched by the email Google
-    already verified. Establishes a normal Django session (same as a
-    password login) without setting the 2FA-verified flag, so
-    AdminTwoFactorMiddleware still routes through the usual email-OTP
-    checkpoint afterwards.
+    already verified. Skips the usual email-OTP 2FA checkpoint: that OTP
+    would be emailed to this same address, which this Google session has
+    already proven ownership of, so it isn't an independent second factor
+    here the way it is after a password login -- it'd just be re-checking
+    the same inbox Google already unlocked.
     """
     if not settings.GOOGLE_CLIENT_ID:
         return JsonResponse({"detail": "Google sign-in isn't configured."}, status=503)
@@ -51,6 +53,7 @@ def admin_google_login(request):
     # ModelBackend (not registered) would look like a successful login here
     # and then evaporate on the very next request.
     auth_login(request, user, backend="apps.users.backends.EmailOrPhoneBackend")
+    request.session[SESSION_VERIFIED_KEY] = True
 
     next_url = request.GET.get("next") or reverse("admin:index")
-    return JsonResponse({"redirect": f"{reverse('admin-2fa-verify')}?next={next_url}"})
+    return JsonResponse({"redirect": next_url})

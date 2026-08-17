@@ -57,7 +57,7 @@ def test_unknown_email_is_refused(settings):
     assert response.status_code == 403
 
 
-def test_matching_staff_account_logs_in_and_still_needs_2fa(settings):
+def test_matching_staff_account_logs_in_and_skips_2fa(settings):
     settings.GOOGLE_CLIENT_ID = "test-client-id"
     admin = UserFactory(email="staffgoogle@example.com", is_staff=True)
     client = Client()
@@ -68,12 +68,12 @@ def test_matching_staff_account_logs_in_and_still_needs_2fa(settings):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["redirect"].startswith(reverse("admin-2fa-verify"))
+    assert data["redirect"] == reverse("admin:index")
 
-    # Session is authenticated, but the 2FA checkpoint still gates the admin.
+    # The OTP would go to this same address, which Google already proved
+    # ownership of -- so, unlike password login, no separate 2FA checkpoint.
     admin_response = client.get("/admin/", follow=False)
-    assert admin_response.status_code == 302
-    assert "/admin-2fa/verify/" in admin_response.url
+    assert admin_response.status_code == 200
 
 
 def test_inactive_staff_account_is_refused(settings):

@@ -115,6 +115,13 @@
                     window.google.accounts.id.initialize({
                         client_id: "{{ GOOGLE_CLIENT_ID }}",
                         callback: handleCredential,
+                        // Chrome's third-party-cookie phase-out breaks the
+                        // old popup-based handshake (the exact symptom is a
+                        // popup that opens, shows the account picker, and
+                        // then hangs after you pick an account) -- FedCM is
+                        // Google's replacement and doesn't depend on
+                        // third-party cookies.
+                        use_fedcm_for_prompt: true,
                     });
                     window.google.accounts.id.renderButton(document.getElementById("admin-google-signin"), {
                         type: "standard",
