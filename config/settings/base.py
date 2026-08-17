@@ -298,6 +298,14 @@ FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:3000")
 # used to verify the ID token the frontend gets from Google Sign-In.
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
 
+# --- Geolocation (login history "location" column) --------------------------
+# MaxMind's GeoLite2-City.mmdb, downloaded via `manage.py download_geoip_db`
+# (needs a free MaxMind account + license key -- see that command's help
+# text). Location resolution degrades to blank if this file isn't present,
+# same as any other IP that can't be resolved.
+MAXMIND_LICENSE_KEY = env("MAXMIND_LICENSE_KEY", default="")
+GEOIP_PATH = env("GEOIP_PATH", default=str(BASE_DIR / "geoip" / "GeoLite2-City.mmdb"))
+
 # --- File upload limits -----------------------------------------------------
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024  # 20 MB, matches quote-form spec
 FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024

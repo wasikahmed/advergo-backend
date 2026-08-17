@@ -25,9 +25,9 @@ def _describe_device(user_agent_string: str) -> str:
 
 
 def _describe_location(ip_address: str | None) -> str:
-    """Best-effort only, and only for the private-vs-public distinction --
-    real geolocation for public IPs isn't wired up yet (see discussion with
-    the user before adding a MaxMind DB or third-party lookup service)."""
+    """"Local network" for private/loopback IPs, "City, Country" for public
+    ones via MaxMind GeoLite2 (see apps.activity.geoip) -- blank if that
+    database isn't installed or the IP isn't in it."""
     if not ip_address:
         return ""
     try:
@@ -36,7 +36,10 @@ def _describe_location(ip_address: str | None) -> str:
         return ""
     if addr.is_private or addr.is_loopback:
         return "Local network"
-    return ""
+
+    from .geoip import resolve_location
+
+    return resolve_location(ip_address)
 
 
 def log_login(*, request, channel: str, success: bool, user=None, identifier: str = "") -> LoginEvent:
