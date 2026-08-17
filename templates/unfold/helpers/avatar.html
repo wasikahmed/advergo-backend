@@ -1,0 +1,9 @@
+{% if user.avatar %}
+    {% with avatar_url=user.avatar.url %}
+        {% include "unfold/helpers/_avatar_box.html" %}
+    {% endwith %}
+{% else %}
+    {% with avatar_url=user.avatar_url %}
+        {% include "unfold/helpers/_avatar_box.html" %}
+    {% endwith %}
+{% endif %}

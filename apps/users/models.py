@@ -26,6 +26,10 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     # not re-uploaded to our storage. Blank for accounts that never signed in
     # with Google.
     avatar_url = models.URLField(max_length=500, blank=True)
+    # A staff member's own uploaded picture (via the admin "My profile"
+    # page), separate from avatar_url -- takes priority over it when set
+    # (see templates/unfold/helpers/avatar.html).
+    avatar = models.ImageField(upload_to="advergo/avatars/", blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

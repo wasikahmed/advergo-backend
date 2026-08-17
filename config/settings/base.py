@@ -329,6 +329,15 @@ UNFOLD = {
     "SCRIPTS": [
         lambda request: static("admin/js/column-controls.js"),
     ],
+    # Setting this list at all replaces Unfold's default "Change password"
+    # link in the account dropdown rather than adding alongside it, so it
+    # has to be listed explicitly here too.
+    "ACCOUNT": {
+        "navigation": [
+            {"title": _("My profile"), "link": reverse_lazy("admin-profile")},
+            {"title": _("Change password"), "link": reverse_lazy("admin:password_change")},
+        ],
+    },
     "COLORS": {
         "primary": {
             "50": "#fdf2f2",

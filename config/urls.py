@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
-from apps.users import admin_2fa, admin_google, admin_views
+from apps.users import admin_2fa, admin_google, admin_profile, admin_views
 
 api_v1_patterns = [
     path("auth/", include("apps.users.urls")),
@@ -44,6 +44,10 @@ urlpatterns = [
     ),
     path("admin-2fa/verify/", admin_2fa.verify, name="admin-2fa-verify"),
     path("admin-google-login/", admin_google.admin_google_login, name="admin-google-login"),
+    # Before the catch-all admin.site.urls below, same reason as the
+    # password-reset/2fa/google-login paths above -- this must win the
+    # match first, or admin.site.urls swallows the prefix and 404s.
+    path(f"{settings.ADMIN_URL}profile/", admin_profile.my_profile, name="admin-profile"),
     path(settings.ADMIN_URL, admin.site.urls),
     path("api/v1/", include(api_v1_patterns)),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
