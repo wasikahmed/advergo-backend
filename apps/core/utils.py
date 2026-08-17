@@ -11,6 +11,22 @@ def generate_reference_code(prefix: str, length: int = 8) -> str:
     return f"{prefix}-{suffix}"
 
 
+def get_client_ip(request: HttpRequest) -> str | None:
+    """
+    Real client IP behind Cloudflare Tunnel (production's setup) -- Cloudflare
+    sets CF-Connecting-IP at its edge, which isn't spoofable by the client the
+    way X-Forwarded-For is, so it's checked first. Falls back through
+    X-Forwarded-For (first hop) to REMOTE_ADDR for local/non-Cloudflare dev.
+    """
+    cf_ip = request.META.get("HTTP_CF_CONNECTING_IP")
+    if cf_ip:
+        return cf_ip
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR")
+
+
 def admin_action_redirect(request: HttpRequest, url: str) -> HttpResponse:
     """
     Redirect from an Unfold admin action. Unfold's dialog forms submit via

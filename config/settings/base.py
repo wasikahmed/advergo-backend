@@ -71,6 +71,7 @@ LOCAL_APPS = [
     "apps.orders",
     "apps.invoices",
     "apps.wishlist",
+    "apps.activity",
 ]
 
 # django_cleanup must load last -- it walks every already-registered model's
@@ -564,6 +565,29 @@ UNFOLD = {
                         "title": _("Staff invites"),
                         "icon": "mail",
                         "link": reverse_lazy("admin:users_staffinvite_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Activity"),
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": _("Login history"),
+                        "icon": "history",
+                        "link": reverse_lazy("admin:activity_loginevent_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "activity.view_loginevent"
+                        ),
+                    },
+                    {
+                        "title": _("Activity log"),
+                        "icon": "manage_history",
+                        "link": reverse_lazy("admin:activity_activitylog_changelist"),
+                        "permission": lambda request: request.user.has_perm(
+                            "activity.view_activitylog"
+                        ),
                     },
                 ],
             },

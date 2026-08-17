@@ -7,6 +7,7 @@ from unfold.admin import ModelAdmin, TabularInline
 from unfold.decorators import action
 from unfold.widgets import CHECKBOX_CLASSES
 
+from apps.activity.services import log_activity
 from apps.core.utils import admin_action_redirect
 from apps.invoices.models import Chalan, Invoice
 
@@ -141,8 +142,16 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         if idx is None or idx + 1 >= len(_STATUS_PIPELINE):
             self.message_user(request, "This order can't be advanced further.", level=messages.WARNING)
         else:
+            old_status = order.get_status_display()
             order.status = _STATUS_PIPELINE[idx + 1]
             order.save(update_fields=["status"])
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="advanced_status",
+                target=order,
+                description=f"{old_status} -> {order.get_status_display()}",
+            )
             self.message_user(
                 request,
                 f"{order.reference_code} -> {order.get_status_display()}.",
@@ -158,6 +167,7 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         else:
             order.status = OrderStatus.CANCELLED
             order.save(update_fields=["status"])
+            log_activity(actor=request.user, request=request, verb="cancelled_order", target=order)
             self.message_user(request, f"{order.reference_code} cancelled.", level=messages.SUCCESS)
         return admin_action_redirect(request, reverse("admin:orders_order_changelist"))
 
@@ -170,7 +180,14 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
             if order.total_value is None:
                 skipped += 1
                 continue
-            _generate(order, generated_by=request.user)
+            invoice = _generate(order, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_invoice",
+                target=order,
+                description=f"Generated invoice {invoice.invoice_number}",
+            )
             sent += 1
         if skipped:
             self.message_user(
@@ -192,7 +209,14 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
                 request, "Set a total value before generating an invoice.", level=messages.WARNING
             )
         else:
-            generate_and_send_invoice(order, generated_by=request.user)
+            invoice = generate_and_send_invoice(order, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_invoice",
+                target=order,
+                description=f"Generated invoice {invoice.invoice_number}",
+            )
             self.message_user(
                 request, f"Generated invoice for {order.reference_code}.", level=messages.SUCCESS
             )
@@ -203,7 +227,14 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
 
         generated = 0
         for order in queryset:
-            create_chalan(order, include_price=include_price, generated_by=request.user)
+            chalan = create_chalan(order, include_price=include_price, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_chalan",
+                target=order,
+                description=f"Generated chalan {chalan.chalan_number}",
+            )
             generated += 1
         self.message_user(request, f"Generated {generated} chalan(s).", level=messages.SUCCESS)
 
@@ -232,7 +263,16 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         if order is None:
             self.message_user(request, "Order not found.", level=messages.ERROR)
         else:
-            create_chalan(order, include_price=form.cleaned_data["include_price"], generated_by=request.user)
+            chalan = create_chalan(
+                order, include_price=form.cleaned_data["include_price"], generated_by=request.user
+            )
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_chalan",
+                target=order,
+                description=f"Generated chalan {chalan.chalan_number}",
+            )
             self.message_user(
                 request, f"Generated a chalan for {order.reference_code}.", level=messages.SUCCESS
             )

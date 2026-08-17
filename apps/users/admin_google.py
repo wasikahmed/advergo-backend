@@ -7,6 +7,9 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
+from apps.activity.models import LoginChannel
+from apps.activity.services import log_login
+
 from .admin_2fa import SESSION_VERIFIED_KEY
 from .google_auth import InvalidGoogleToken, verify_google_id_token
 from .models import User
@@ -37,14 +40,22 @@ def admin_google_login(request):
     try:
         payload = verify_google_id_token(id_token)
     except InvalidGoogleToken as e:
+        log_login(request=request, channel=LoginChannel.ADMIN_GOOGLE, success=False)
         return JsonResponse({"detail": str(e)}, status=400)
 
     user = User.objects.filter(email__iexact=payload["email"], is_staff=True).first()
     if user is None:
+        log_login(
+            request=request,
+            channel=LoginChannel.ADMIN_GOOGLE,
+            success=False,
+            identifier=payload["email"],
+        )
         return JsonResponse(
             {"detail": "This Google account isn't linked to an admin account."}, status=403
         )
     if not user.is_active:
+        log_login(request=request, channel=LoginChannel.ADMIN_GOOGLE, success=False, user=user)
         return JsonResponse({"detail": "This admin account is inactive."}, status=403)
 
     # Must match settings.AUTHENTICATION_BACKENDS -- auth.get_user() on the
@@ -54,6 +65,7 @@ def admin_google_login(request):
     # and then evaporate on the very next request.
     auth_login(request, user, backend="apps.users.backends.EmailOrPhoneBackend")
     request.session[SESSION_VERIFIED_KEY] = True
+    log_login(request=request, channel=LoginChannel.ADMIN_GOOGLE, success=True, user=user)
 
     next_url = request.GET.get("next") or reverse("admin:index")
     return JsonResponse({"redirect": next_url})

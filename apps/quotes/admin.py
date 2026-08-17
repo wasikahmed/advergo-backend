@@ -7,6 +7,7 @@ from unfold.admin import ModelAdmin, TabularInline
 from unfold.decorators import action
 from unfold.widgets import INPUT_CLASSES
 
+from apps.activity.services import log_activity
 from apps.core.utils import admin_action_redirect, generate_reference_code
 from apps.invoices.models import Quotation
 from apps.pricing.services import estimate_price
@@ -175,6 +176,13 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
                 unit_price=form.cleaned_data["unit_price"],
                 delivery_address=form.cleaned_data["delivery_address"],
             )
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="converted_to_order",
+                target=quote,
+                description=f"Converted to order {order.reference_code}",
+            )
             self.message_user(
                 request, f"Created order {order.reference_code}.", level=messages.SUCCESS
             )
@@ -186,6 +194,13 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
 
         sent = 0
         for quote in queryset:
-            _generate(quote, generated_by=request.user)
+            quotation = _generate(quote, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_quotation",
+                target=quote,
+                description=f"Generated quotation {quotation.quotation_number}",
+            )
             sent += 1
         self.message_user(request, f"Generated {sent} quotation(s).", level=messages.SUCCESS)

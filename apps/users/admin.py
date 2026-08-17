@@ -11,6 +11,8 @@ from unfold.admin import ModelAdmin
 from unfold.decorators import action
 from unfold.forms import UserChangeForm, UserCreationForm
 
+from apps.activity.services import log_activity
+
 from .invites import send_staff_invite_email
 from .models import StaffInvite, User
 
@@ -39,6 +41,15 @@ class UserAdmin(SimpleHistoryAdmin, ModelAdmin, DjangoUserAdmin):
         (None, {"classes": ("wide",), "fields": ("email", "phone", "password1", "password2")}),
     )
     readonly_fields = ["last_login", "created_at", "updated_at"]
+    actions_detail = ["view_login_history_row", "view_activity_row"]
+
+    @action(description="View login history", icon="history")
+    def view_login_history_row(self, request, object_id):
+        return redirect(f"{reverse('admin:activity_loginevent_changelist')}?user__id__exact={object_id}")
+
+    @action(description="View activity", icon="manage_history")
+    def view_activity_row(self, request, object_id):
+        return redirect(f"{reverse('admin:activity_activitylog_changelist')}?actor__id__exact={object_id}")
 
 
 @admin.register(StaffInvite)
@@ -81,11 +92,18 @@ class StaffInviteAdmin(ModelAdmin):
             send_staff_invite_email(obj)
             self.message_user(request, f"Invite email sent to {obj.email}.")
 
-    def _resend(self, invite):
+    def _resend(self, request, invite):
         invite.token = secrets.token_urlsafe(32)
         invite.expires_at = timezone.now() + timedelta(days=7)
         invite.save(update_fields=["token", "expires_at"])
         send_staff_invite_email(invite)
+        log_activity(
+            actor=request.user,
+            request=request,
+            verb="resent_invite",
+            target=invite,
+            description=f"Resent invite to {invite.email}",
+        )
 
     @admin.action(description="Resend invite email (refreshes the link's expiry)")
     def resend_invite(self, request, queryset):
@@ -94,7 +112,7 @@ class StaffInviteAdmin(ModelAdmin):
 
         sent = 0
         for invite in pending:
-            self._resend(invite)
+            self._resend(request, invite)
             sent += 1
 
         self.message_user(request, f"Resent {sent} invite(s).", level=messages.SUCCESS)
@@ -121,6 +139,6 @@ class StaffInviteAdmin(ModelAdmin):
                 level=messages.WARNING,
             )
         else:
-            self._resend(invite)
+            self._resend(request, invite)
             self.message_user(request, f"Invite email resent to {invite.email}.", level=messages.SUCCESS)
         return redirect(reverse("admin:users_staffinvite_changelist"))

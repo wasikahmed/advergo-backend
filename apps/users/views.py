@@ -12,6 +12,8 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from apps.activity.models import LoginChannel
+from apps.activity.services import log_login
 from apps.core.permissions import IsAdmin
 
 from .google_auth import InvalidGoogleToken, verify_google_id_token
@@ -125,12 +127,17 @@ class LoginView(TokenObtainPairView):
 
         user = serializer.user
         if user.is_staff:
+            # Not logged in yet -- password only unlocks the 2FA challenge;
+            # the actual login is logged once that challenge is passed (see
+            # TwoFactorVerifyView), same as a bad password never reaches
+            # here at all (caught by the user_login_failed signal instead).
             challenge_id = create_and_send_login_2fa_otp(user)
             return Response(
                 {"twoFactorRequired": True, "challengeId": challenge_id},
                 status=status.HTTP_202_ACCEPTED,
             )
 
+        log_login(request=request, channel=LoginChannel.API_PASSWORD, success=True, user=user)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
@@ -152,9 +159,19 @@ class TwoFactorVerifyView(generics.GenericAPIView):
             purpose=OTPPurpose.LOGIN_2FA,
         )
         if otp is None or otp.user_id is None:
+            # Doesn't distinguish password- vs Google-originated challenges
+            # (the OTP layer doesn't carry that) -- logged under the
+            # password channel either way.
+            log_login(
+                request=request,
+                channel=LoginChannel.API_PASSWORD,
+                success=False,
+                identifier=str(serializer.validated_data["challenge_id"]),
+            )
             raise ValidationError({"code": "Invalid or expired code."})
 
         user = User.objects.get(pk=otp.user_id)
+        log_login(request=request, channel=LoginChannel.API_PASSWORD, success=True, user=user)
         return Response(_tokens_for_user(user), status=status.HTTP_200_OK)
 
 
@@ -254,6 +271,7 @@ class GoogleLoginView(generics.GenericAPIView):
         try:
             payload = verify_google_id_token(serializer.validated_data["id_token"])
         except InvalidGoogleToken as e:
+            log_login(request=request, channel=LoginChannel.API_GOOGLE, success=False)
             raise ValidationError({"id_token": str(e)}) from e
 
         email = payload["email"]
@@ -291,12 +309,15 @@ class GoogleLoginView(generics.GenericAPIView):
                 user.save(update_fields=update_fields)
 
         if user.is_staff:
+            # See TwoFactorVerifyView -- not logged in yet, the OTP layer
+            # doesn't distinguish this from a password-originated challenge.
             challenge_id = create_and_send_login_2fa_otp(user)
             return Response(
                 {"twoFactorRequired": True, "challengeId": challenge_id},
                 status=status.HTTP_202_ACCEPTED,
             )
 
+        log_login(request=request, channel=LoginChannel.API_GOOGLE, success=True, user=user)
         return Response(_tokens_for_user(user), status=status.HTTP_200_OK)
 
 

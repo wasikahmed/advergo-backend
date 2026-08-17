@@ -3,6 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from apps.activity.models import LoginChannel
+from apps.activity.services import log_login
+
 from .otp import OTPPurpose, create_and_send_login_2fa_otp, verify_otp
 
 SESSION_CHALLENGE_KEY = "admin_2fa_challenge_id"
@@ -42,10 +45,22 @@ def verify(request):
             else None
         )
         if otp is None or otp.user_id != str(request.user.id):
+            log_login(
+                request=request,
+                channel=LoginChannel.ADMIN_PASSWORD,
+                success=False,
+                user=request.user,
+            )
             messages.error(request, "Invalid or expired code.")
         else:
             request.session[SESSION_VERIFIED_KEY] = True
             request.session.pop(SESSION_CHALLENGE_KEY, None)
+            log_login(
+                request=request,
+                channel=LoginChannel.ADMIN_PASSWORD,
+                success=True,
+                user=request.user,
+            )
             return redirect(next_url)
     elif not challenge_id:
         challenge_id = create_and_send_login_2fa_otp(request.user)

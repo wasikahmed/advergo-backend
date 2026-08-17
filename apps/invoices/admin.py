@@ -5,6 +5,7 @@ from django.urls import reverse
 from unfold.admin import ModelAdmin
 from unfold.decorators import action
 
+from apps.activity.services import log_activity
 from apps.core.utils import admin_action_redirect
 
 from .models import Chalan, Invoice, Quotation
@@ -75,7 +76,14 @@ class InvoiceAdmin(ModelAdmin):
         if invoice is None:
             self.message_user(request, "Invoice not found.", level=messages.ERROR)
         else:
-            generate_and_send_invoice(invoice.order, generated_by=request.user)
+            new_invoice = generate_and_send_invoice(invoice.order, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_invoice",
+                target=invoice.order,
+                description=f"Generated invoice {new_invoice.invoice_number}",
+            )
             self.message_user(
                 request, f"Generated a new invoice for {invoice.order.reference_code}.", level=messages.SUCCESS
             )
@@ -85,7 +93,14 @@ class InvoiceAdmin(ModelAdmin):
     def regenerate_and_send(self, request, queryset):
         orders = {invoice.order for invoice in queryset}
         for order in orders:
-            generate_and_send_invoice(order, generated_by=request.user)
+            new_invoice = generate_and_send_invoice(order, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_invoice",
+                target=order,
+                description=f"Generated invoice {new_invoice.invoice_number}",
+            )
         self.message_user(request, f"Generated {len(orders)} new invoice(s).", level=messages.SUCCESS)
 
 
@@ -137,7 +152,14 @@ class QuotationAdmin(ModelAdmin):
         if quotation is None:
             self.message_user(request, "Quotation not found.", level=messages.ERROR)
         else:
-            generate_and_send_quotation(quotation.quote_request, generated_by=request.user)
+            new_quotation = generate_and_send_quotation(quotation.quote_request, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_quotation",
+                target=quotation.quote_request,
+                description=f"Generated quotation {new_quotation.quotation_number}",
+            )
             self.message_user(
                 request,
                 f"Generated a new quotation for {quotation.quote_request.reference_code}.",
@@ -149,7 +171,14 @@ class QuotationAdmin(ModelAdmin):
     def regenerate_and_send(self, request, queryset):
         quotes = {quotation.quote_request for quotation in queryset}
         for quote in quotes:
-            generate_and_send_quotation(quote, generated_by=request.user)
+            new_quotation = generate_and_send_quotation(quote, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_quotation",
+                target=quote,
+                description=f"Generated quotation {new_quotation.quotation_number}",
+            )
         self.message_user(request, f"Generated {len(quotes)} new quotation(s).", level=messages.SUCCESS)
 
 
@@ -202,7 +231,16 @@ class ChalanAdmin(ModelAdmin):
         if chalan is None:
             self.message_user(request, "Chalan not found.", level=messages.ERROR)
         else:
-            create_chalan(chalan.order, include_price=chalan.include_price, generated_by=request.user)
+            new_chalan = create_chalan(
+                chalan.order, include_price=chalan.include_price, generated_by=request.user
+            )
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_chalan",
+                target=chalan.order,
+                description=f"Generated chalan {new_chalan.chalan_number}",
+            )
             self.message_user(
                 request, f"Generated a new chalan for {chalan.order.reference_code}.", level=messages.SUCCESS
             )
@@ -211,7 +249,14 @@ class ChalanAdmin(ModelAdmin):
     def _regenerate(self, request, queryset, *, include_price):
         orders = {chalan.order for chalan in queryset}
         for order in orders:
-            create_chalan(order, include_price=include_price, generated_by=request.user)
+            new_chalan = create_chalan(order, include_price=include_price, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_chalan",
+                target=order,
+                description=f"Generated chalan {new_chalan.chalan_number}",
+            )
         self.message_user(request, f"Generated {len(orders)} new chalan(s).", level=messages.SUCCESS)
 
     @admin.action(description="Regenerate (new dated copy) without price")
