@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.auth.models import Permission
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -11,6 +12,7 @@ from unfold.admin import ModelAdmin
 from unfold.decorators import action
 from unfold.forms import UserChangeForm, UserCreationForm
 
+from apps.access_control.fields import GroupedPermissionField
 from apps.activity.services import log_activity
 from apps.core.admin_utils import user_chip
 
@@ -47,6 +49,20 @@ class UserAdmin(SimpleHistoryAdmin, ModelAdmin, DjangoUserAdmin):
     )
     readonly_fields = ["last_login", "created_at", "updated_at"]
     actions_detail = ["view_login_history_row", "view_activity_row"]
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        # Per-user permission overrides get the same grouped-by-app picker as
+        # Roles (apps.access_control.admin.RoleAdmin) instead of Django's raw
+        # alphabetical multi-select -- "groups" keeps the inherited
+        # filter_horizontal widget, it's a short, searchable list already.
+        if db_field.name == "user_permissions":
+            return GroupedPermissionField(
+                queryset=Permission.objects.select_related("content_type"),
+                required=False,
+                label=db_field.verbose_name.capitalize(),
+                help_text=db_field.help_text,
+            )
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     @action(description="View login history", icon="history")
     def view_login_history_row(self, request, object_id):

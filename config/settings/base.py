@@ -63,6 +63,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.core",
     "apps.users",
+    "apps.access_control",
     "apps.catalog",
     "apps.content",
     "apps.reviews",
@@ -602,7 +603,7 @@ UNFOLD = {
                 ],
             },
             {
-                "title": _("Users & access"),
+                "title": _("Access control"),
                 "separator": True,
                 "collapsible": True,
                 "items": [
@@ -617,6 +618,12 @@ UNFOLD = {
                         "icon": "mail",
                         "link": reverse_lazy("admin:users_staffinvite_changelist"),
                         "permission": _nav_permission("users.view_staffinvite"),
+                    },
+                    {
+                        "title": _("Roles"),
+                        "icon": "admin_panel_settings",
+                        "link": reverse_lazy("admin:access_control_role_changelist"),
+                        "permission": lambda request: request.user.is_superuser,
                     },
                 ],
             },
