@@ -9,6 +9,18 @@
 
 {% block content %}
     {% if dashboard_sections %}
+        <div class="flex items-center justify-between mb-4">
+            <span class="font-semibold text-font-subtle-light text-sm dark:text-font-subtle-dark">Insights range</span>
+            <div class="flex gap-1 bg-base-50 p-1 rounded-default dark:bg-base-900">
+                {% for option in dashboard_range_options %}
+                    <a href="?days={{ option }}"
+                       class="px-3 py-1 rounded-default text-sm {% if option == dashboard_range_days %}bg-white font-semibold text-important shadow-xs dark:bg-base-700{% else %}text-font-subtle-light dark:text-font-subtle-dark{% endif %}">
+                        {{ option }}d
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+
         <div class="flex flex-col gap-6 mb-8">
             {% for section in dashboard_sections %}
                 <div>
@@ -26,7 +38,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
                         {% if section.trend_chart %}
                             <div class="lg:col-span-2">
-                                {% component "unfold/components/card.html" with title="Last 30 days" %}
+                                {% component "unfold/components/card.html" with title=dashboard_range_label %}
                                     {% component "unfold/components/chart/line.html" with data=section.trend_chart height=220 %}{% endcomponent %}
                                 {% endcomponent %}
                             </div>

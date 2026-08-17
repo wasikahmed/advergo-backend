@@ -46,6 +46,11 @@ class RoleAdmin(ModelAdmin):
         ("Members", {"fields": ("members",)}),
         ("Permissions", {"fields": ("permissions",)}),
     )
+    # Unfold's default puts every field label in a fixed 224px left column
+    # (compressed_fields=True) -- fine for short "Name: [____]" rows, but
+    # here it just reserves dead space next to a full-width widget whose
+    # fieldset heading ("Members"/"Permissions") already says what it is.
+    compressed_fields = False
 
     @admin.display(description="Members")
     def member_count(self, obj):

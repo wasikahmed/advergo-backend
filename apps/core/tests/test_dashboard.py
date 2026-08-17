@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.contrib.auth.models import Permission
 from django.test import RequestFactory
@@ -9,8 +11,9 @@ from apps.users.tests.factories import UserFactory
 pytestmark = pytest.mark.django_db
 
 
-def _request_for(user):
-    request = RequestFactory().get("/admin/")
+def _request_for(user, days=None):
+    url = "/admin/" if days is None else f"/admin/?days={days}"
+    request = RequestFactory().get(url)
     request.user = user
     return request
 
@@ -72,3 +75,36 @@ def test_engagement_section_omits_optional_kpis_without_permission():
     kpi_titles = [k["title"] for k in engagement["kpis"]]
     assert "Wishlist items" not in kpi_titles
     assert "Avg. review rating" not in kpi_titles
+
+
+def test_default_range_is_30_days():
+    user = UserFactory(email="ranged@example.com", is_staff=True)
+    context = dashboard_callback(_request_for(user), {})
+    assert context["dashboard_range_days"] == 30
+    assert context["dashboard_range_label"] == "Last 30 days"
+
+
+def test_range_selectable_via_query_param():
+    user = UserFactory(email="ranged2@example.com", is_staff=True)
+    context = dashboard_callback(_request_for(user, days=7), {})
+    assert context["dashboard_range_days"] == 7
+    assert context["dashboard_range_label"] == "Last 7 days"
+
+
+def test_invalid_range_falls_back_to_default():
+    user = UserFactory(email="ranged3@example.com", is_staff=True)
+    context = dashboard_callback(_request_for(user, days=999), {})
+    assert context["dashboard_range_days"] == 30
+
+
+def test_range_affects_trend_and_kpi_window():
+    user = UserFactory(email="ranged4@example.com", is_staff=True)
+    user.user_permissions.add(Permission.objects.get(codename="view_order", content_type__app_label="orders"))
+
+    context = dashboard_callback(_request_for(user, days=7), {})
+    orders_section = next(s for s in context["dashboard_sections"] if s["title"] == "Orders & fulfillment")
+    kpi_titles = [k["title"] for k in orders_section["kpis"]]
+    assert "New in last 7 days" in kpi_titles
+
+    trend_labels = json.loads(orders_section["trend_chart"])["labels"]
+    assert len(trend_labels) == 7

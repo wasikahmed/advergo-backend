@@ -50,6 +50,15 @@ def test_role_changelist_allows_superuser(superuser):
     assert response.status_code == 200
 
 
+def test_role_admin_uses_full_width_fields(superuser):
+    from apps.access_control.admin import RoleAdmin
+
+    # compressed_fields=True (Unfold's default) reserves a fixed left label
+    # column that's redundant here -- the Members/Permissions fieldset
+    # headings already say what the wide widgets below them are.
+    assert RoleAdmin.compressed_fields is False
+
+
 def test_create_role_assigns_permissions_and_members(superuser):
     client = _client_for(superuser)
     member = UserFactory(email="member@example.com", is_staff=True)

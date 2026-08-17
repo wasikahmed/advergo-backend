@@ -9,12 +9,21 @@ from django.utils.formats import date_format
 
 from apps.core.admin_utils import user_chip
 
-TREND_DAYS = 30
+DEFAULT_RANGE_DAYS = 30
+AVAILABLE_RANGE_DAYS = (7, 30, 90)
 
 
-def _daily_trend(queryset, *, date_field="created_at", days=TREND_DAYS):
+def _selected_range_days(request) -> int:
+    try:
+        days = int(request.GET.get("days", DEFAULT_RANGE_DAYS))
+    except (TypeError, ValueError):
+        return DEFAULT_RANGE_DAYS
+    return days if days in AVAILABLE_RANGE_DAYS else DEFAULT_RANGE_DAYS
+
+
+def _daily_trend(queryset, days, *, date_field="created_at"):
     """
-    "count per day for the last N days", zero-filled -- ready to drop
+    "count per day for the selected range", zero-filled -- ready to drop
     straight into an Unfold chart/line.html `data` context var. Zero-filling
     matters here: without it, a quiet day just disappears from the x-axis
     instead of showing as a dip, which reads as missing data rather than "no
@@ -57,7 +66,7 @@ def _breakdown_table(rows):
     return {"headers": ["Status", "Count"], "rows": [[row["label"], row["value"]] for row in rows]}
 
 
-def _orders_section(request):
+def _orders_section(request, days):
     if not request.user.has_perm("orders.view_order"):
         return None
 
@@ -65,10 +74,10 @@ def _orders_section(request):
 
     orders = Order.objects.all()
     active = orders.exclude(status=OrderStatus.CANCELLED)
-    since_30d = timezone.now() - timedelta(days=TREND_DAYS)
+    since = timezone.now() - timedelta(days=days)
 
     status_counts = dict(orders.values_list("status").annotate(count=Count("id")))
-    labels, counts = _daily_trend(orders)
+    labels, counts = _daily_trend(orders, days)
     status_breakdown = [
         {"label": label, "value": status_counts.get(value, 0)} for value, label in OrderStatus.choices
     ]
@@ -81,7 +90,7 @@ def _orders_section(request):
                 "title": "Order value (confirmed)",
                 "value": _money(active.aggregate(total=Sum("total_value"))["total"]),
             },
-            {"title": "New in last 30 days", "value": orders.filter(created_at__gte=since_30d).count()},
+            {"title": f"New in last {days} days", "value": orders.filter(created_at__gte=since).count()},
         ],
         "status_breakdown": status_breakdown,
         "status_breakdown_table": _breakdown_table(status_breakdown),
@@ -89,7 +98,7 @@ def _orders_section(request):
     }
 
 
-def _quotes_section(request):
+def _quotes_section(request, days):
     if not request.user.has_perm("quotes.view_quoterequest"):
         return None
 
@@ -101,7 +110,7 @@ def _quotes_section(request):
     conversion_rate = round((converted / total) * 100, 1) if total else 0
 
     status_counts = dict(quotes.values_list("status").annotate(count=Count("id")))
-    labels, counts = _daily_trend(quotes)
+    labels, counts = _daily_trend(quotes, days)
     status_breakdown = [
         {"label": label, "value": status_counts.get(value, 0)} for value, label in QuoteRequestStatus.choices
     ]
@@ -119,19 +128,18 @@ def _quotes_section(request):
     }
 
 
-def _engagement_section(request):
+def _engagement_section(request, days):
     from apps.users.models import User
 
-    can_view_users = request.user.has_perm("users.view_user")
-    if not can_view_users:
+    if not request.user.has_perm("users.view_user"):
         return None
 
-    since_30d = timezone.now() - timedelta(days=TREND_DAYS)
+    since = timezone.now() - timedelta(days=days)
     customers = User.objects.filter(is_staff=False)
-    labels, counts = _daily_trend(customers)
+    labels, counts = _daily_trend(customers, days)
 
     kpis = [
-        {"title": "New customers (30d)", "value": customers.filter(created_at__gte=since_30d).count()},
+        {"title": f"New customers ({days}d)", "value": customers.filter(created_at__gte=since).count()},
         {"title": "Total customers", "value": customers.count()},
     ]
 
@@ -158,14 +166,14 @@ def _engagement_section(request):
     }
 
 
-def _admin_section(request):
+def _admin_section(request, days):
     if not request.user.has_perm("activity.view_loginevent"):
         return None
 
     from apps.activity.models import LoginEvent
 
-    since_30d = timezone.now() - timedelta(days=TREND_DAYS)
-    recent = LoginEvent.objects.filter(created_at__gte=since_30d)
+    since = timezone.now() - timedelta(days=days)
+    recent = LoginEvent.objects.filter(created_at__gte=since)
     total = recent.count()
     failed = recent.filter(success=False).count()
     failure_rate = round((failed / total) * 100, 1) if total else 0
@@ -179,8 +187,8 @@ def _admin_section(request):
     section = {
         "title": "Admin & security",
         "kpis": [
-            {"title": "Logins (30d)", "value": total},
-            {"title": "Failed logins (30d)", "value": failed},
+            {"title": f"Logins ({days}d)", "value": total},
+            {"title": f"Failed logins ({days}d)", "value": failed},
             {"title": "Failure rate", "value": f"{failure_rate}%"},
         ],
         "channel_breakdown": channel_breakdown,
@@ -211,15 +219,19 @@ def _admin_section(request):
 
 
 def dashboard_callback(request, context):
+    days = _selected_range_days(request)
     sections = [
         section
         for section in (
-            _orders_section(request),
-            _quotes_section(request),
-            _engagement_section(request),
-            _admin_section(request),
+            _orders_section(request, days),
+            _quotes_section(request, days),
+            _engagement_section(request, days),
+            _admin_section(request, days),
         )
         if section is not None
     ]
     context["dashboard_sections"] = sections
+    context["dashboard_range_days"] = days
+    context["dashboard_range_label"] = f"Last {days} days"
+    context["dashboard_range_options"] = AVAILABLE_RANGE_DAYS
     return context

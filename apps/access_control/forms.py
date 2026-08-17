@@ -20,11 +20,13 @@ class RoleForm(forms.ModelForm):
     permissions = GroupedPermissionField(
         queryset=Permission.objects.select_related("content_type"),
         required=False,
+        label="",  # the "Permissions" fieldset heading already says this
     )
     members = forms.ModelMultipleChoiceField(
         queryset=User.objects.filter(is_staff=True).order_by("full_name", "email"),
         required=False,
         widget=FilteredSelectMultiple("staff members", is_stacked=False),
+        label="",  # the "Members" fieldset heading already says this
     )
 
     class Meta:
