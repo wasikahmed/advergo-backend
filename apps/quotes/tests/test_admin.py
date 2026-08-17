@@ -99,7 +99,7 @@ def test_convert_dialog_refuses_an_already_converted_quote(admin_client, quote, 
         },
     )
 
-    # Superusers bypass the has_*_permission gate, so this exercises the
-    # in-body guard instead: redirects with a warning, no duplicate order.
+    # No has_*_permission gate on this action -- the in-body guard handles
+    # it: redirects with a warning, no duplicate order.
     assert response.status_code == 302
     assert not Order.objects.filter(quote_request=quote).exists()

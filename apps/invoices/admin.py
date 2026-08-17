@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from unfold.admin import ModelAdmin
@@ -8,6 +9,17 @@ from apps.core.utils import admin_action_redirect
 
 from .models import Chalan, Invoice, Quotation
 from .services import create_chalan, generate_and_send_invoice, generate_and_send_quotation
+
+
+def _download_response(pdf_file, filename: str) -> HttpResponse:
+    pdf_file.open("rb")
+    try:
+        data = pdf_file.read()
+    finally:
+        pdf_file.close()
+    response = HttpResponse(data, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}.pdf"'
+    return response
 
 
 @admin.register(Invoice)
@@ -24,7 +36,9 @@ class InvoiceAdmin(ModelAdmin):
         "updated_at",
     ]
     actions = ["regenerate_and_send"]
-    actions_row = ["view_pdf_row", "regenerate_row"]
+    actions_row = ["view_pdf_row", "download_pdf_row", "regenerate_row"]
+    # Same actions, available as buttons on the (read-only) detail page too.
+    actions_detail = ["view_pdf_row", "download_pdf_row", "regenerate_row"]
 
     def has_add_permission(self, request):
         # Only ever created via the generate action (renders the PDF, sets
@@ -39,12 +53,6 @@ class InvoiceAdmin(ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def has_view_pdf_row_permission(self, request, object_id=None) -> bool:
-        if object_id is None:
-            return True
-        invoice = Invoice.objects.filter(pk=object_id).first()
-        return bool(invoice and invoice.pdf_file)
-
     @action(description="View PDF", icon="visibility", attrs={"target": "_blank"})
     def view_pdf_row(self, request, object_id):
         invoice = self.get_object(request, object_id)
@@ -52,6 +60,14 @@ class InvoiceAdmin(ModelAdmin):
             self.message_user(request, "No PDF available.", level=messages.WARNING)
             return admin_action_redirect(request, reverse("admin:invoices_invoice_changelist"))
         return redirect(invoice.pdf_file.url)
+
+    @action(description="Download PDF", icon="download")
+    def download_pdf_row(self, request, object_id):
+        invoice = self.get_object(request, object_id)
+        if invoice is None or not invoice.pdf_file:
+            self.message_user(request, "No PDF available.", level=messages.WARNING)
+            return admin_action_redirect(request, reverse("admin:invoices_invoice_changelist"))
+        return _download_response(invoice.pdf_file, invoice.invoice_number)
 
     @action(description="Regenerate & resend", icon="refresh")
     def regenerate_row(self, request, object_id):
@@ -87,7 +103,8 @@ class QuotationAdmin(ModelAdmin):
         "updated_at",
     ]
     actions = ["regenerate_and_send"]
-    actions_row = ["view_pdf_row", "regenerate_row"]
+    actions_row = ["view_pdf_row", "download_pdf_row", "regenerate_row"]
+    actions_detail = ["view_pdf_row", "download_pdf_row", "regenerate_row"]
 
     def has_add_permission(self, request):
         return False
@@ -98,12 +115,6 @@ class QuotationAdmin(ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def has_view_pdf_row_permission(self, request, object_id=None) -> bool:
-        if object_id is None:
-            return True
-        quotation = Quotation.objects.filter(pk=object_id).first()
-        return bool(quotation and quotation.pdf_file)
-
     @action(description="View PDF", icon="visibility", attrs={"target": "_blank"})
     def view_pdf_row(self, request, object_id):
         quotation = self.get_object(request, object_id)
@@ -111,6 +122,14 @@ class QuotationAdmin(ModelAdmin):
             self.message_user(request, "No PDF available.", level=messages.WARNING)
             return admin_action_redirect(request, reverse("admin:invoices_quotation_changelist"))
         return redirect(quotation.pdf_file.url)
+
+    @action(description="Download PDF", icon="download")
+    def download_pdf_row(self, request, object_id):
+        quotation = self.get_object(request, object_id)
+        if quotation is None or not quotation.pdf_file:
+            self.message_user(request, "No PDF available.", level=messages.WARNING)
+            return admin_action_redirect(request, reverse("admin:invoices_quotation_changelist"))
+        return _download_response(quotation.pdf_file, quotation.quotation_number)
 
     @action(description="Regenerate & resend", icon="refresh")
     def regenerate_row(self, request, object_id):
@@ -149,7 +168,8 @@ class ChalanAdmin(ModelAdmin):
         "updated_at",
     ]
     actions = ["regenerate_without_price", "regenerate_with_price"]
-    actions_row = ["view_pdf_row", "regenerate_row"]
+    actions_row = ["view_pdf_row", "download_pdf_row", "regenerate_row"]
+    actions_detail = ["view_pdf_row", "download_pdf_row", "regenerate_row"]
 
     def has_add_permission(self, request):
         return False
@@ -160,12 +180,6 @@ class ChalanAdmin(ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-    def has_view_pdf_row_permission(self, request, object_id=None) -> bool:
-        if object_id is None:
-            return True
-        chalan = Chalan.objects.filter(pk=object_id).first()
-        return bool(chalan and chalan.pdf_file)
-
     @action(description="View PDF", icon="visibility", attrs={"target": "_blank"})
     def view_pdf_row(self, request, object_id):
         chalan = self.get_object(request, object_id)
@@ -173,6 +187,14 @@ class ChalanAdmin(ModelAdmin):
             self.message_user(request, "No PDF available.", level=messages.WARNING)
             return admin_action_redirect(request, reverse("admin:invoices_chalan_changelist"))
         return redirect(chalan.pdf_file.url)
+
+    @action(description="Download PDF", icon="download")
+    def download_pdf_row(self, request, object_id):
+        chalan = self.get_object(request, object_id)
+        if chalan is None or not chalan.pdf_file:
+            self.message_user(request, "No PDF available.", level=messages.WARNING)
+            return admin_action_redirect(request, reverse("admin:invoices_chalan_changelist"))
+        return _download_response(chalan.pdf_file, chalan.chalan_number)
 
     @action(description="Regenerate (same price setting)", icon="refresh")
     def regenerate_row(self, request, object_id):

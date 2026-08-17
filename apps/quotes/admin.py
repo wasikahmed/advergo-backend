@@ -93,6 +93,10 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
     inlines = [QuotationInline]
     actions = ["generate_and_send_quotation"]
     actions_row = ["preview_quotation_row", "convert_to_order_row"]
+    # Same actions, available as buttons on the change form too -- staff
+    # editing a quote shouldn't have to go back to the changelist just to
+    # preview or convert it.
+    actions_detail = ["preview_quotation_row", "convert_to_order_row"]
 
     _submitted_fields = [
         "user",
@@ -148,16 +152,9 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
         response["Content-Disposition"] = f'inline; filename="{quote.reference_code}-preview.pdf"'
         return response
 
-    def has_convert_to_order_row_permission(self, request, object_id=None) -> bool:
-        if object_id is None:
-            return True
-        quote = QuoteRequest.objects.filter(pk=object_id).first()
-        return bool(quote and quote.status != QuoteRequestStatus.CONVERTED)
-
     @action(
         description="Convert to order",
         icon="shopping_cart",
-        permissions=["convert_to_order_row"],
         dialog={
             "title": "Convert to order",
             "description": "Adjust anything that changed since the quote was first submitted.",

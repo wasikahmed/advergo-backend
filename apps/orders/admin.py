@@ -1,9 +1,11 @@
+from django import forms
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from django.urls import reverse
 from simple_history.admin import SimpleHistoryAdmin
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.decorators import action
+from unfold.widgets import CHECKBOX_CLASSES
 
 from apps.core.utils import admin_action_redirect
 from apps.invoices.models import Chalan, Invoice
@@ -46,6 +48,17 @@ _STATUS_PIPELINE = [
 ]
 
 
+class GenerateChalanForm(forms.Form):
+    include_price = forms.BooleanField(
+        required=False,
+        label="Include unit price / total value",
+        widget=forms.CheckboxInput(attrs={"class": " ".join(CHECKBOX_CLASSES)}),
+    )
+
+    def __init__(self, request, object_id=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
 @admin.register(Order)
 class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
     # Kept short on purpose -- product/unit price/advance paid are one click
@@ -83,6 +96,18 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         "advance_status_row",
         "cancel_order_row",
         "generate_invoice_row",
+        "generate_chalan_row",
+    ]
+    # Same actions, available as buttons on the change form too -- staff
+    # editing an order shouldn't have to go back to the changelist just to
+    # preview or generate its documents.
+    actions_detail = [
+        "preview_invoice_row",
+        "preview_chalan_row",
+        "advance_status_row",
+        "cancel_order_row",
+        "generate_invoice_row",
+        "generate_chalan_row",
     ]
 
     @action(description="Preview invoice PDF", icon="visibility", attrs={"target": "_blank"})
@@ -109,15 +134,7 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         response["Content-Disposition"] = f'inline; filename="{order.reference_code}-chalan-preview.pdf"'
         return response
 
-    def has_advance_status_row_permission(self, request, object_id=None) -> bool:
-        if object_id is None:
-            return True
-        order = Order.objects.filter(pk=object_id).first()
-        return bool(
-            order and order.status in _STATUS_PIPELINE and order.status != OrderStatus.DELIVERED
-        )
-
-    @action(description="Advance to next status", icon="arrow_forward", permissions=["advance_status_row"])
+    @action(description="Advance to next status", icon="arrow_forward")
     def advance_status_row(self, request, object_id):
         order = self.get_object(request, object_id)
         idx = _STATUS_PIPELINE.index(order.status) if order and order.status in _STATUS_PIPELINE else None
@@ -133,13 +150,7 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
             )
         return admin_action_redirect(request, reverse("admin:orders_order_changelist"))
 
-    def has_cancel_order_row_permission(self, request, object_id=None) -> bool:
-        if object_id is None:
-            return True
-        order = Order.objects.filter(pk=object_id).first()
-        return bool(order and order.status != OrderStatus.CANCELLED)
-
-    @action(description="Cancel order", icon="cancel", permissions=["cancel_order_row"])
+    @action(description="Cancel order", icon="cancel")
     def cancel_order_row(self, request, object_id):
         order = self.get_object(request, object_id)
         if order is None or order.status == OrderStatus.CANCELLED:
@@ -203,3 +214,26 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
     @admin.action(description="Generate delivery chalan (with price)")
     def generate_chalan_with_price(self, request, queryset):
         self._generate_chalan(request, queryset, include_price=True)
+
+    @action(
+        description="Generate chalan",
+        icon="local_shipping",
+        dialog={
+            "title": "Generate delivery chalan",
+            "description": "Choose whether this copy should also state price.",
+            "form_class": GenerateChalanForm,
+            "form_submit_text": "Generate",
+        },
+    )
+    def generate_chalan_row(self, request, form, object_id):
+        from apps.invoices.services import create_chalan
+
+        order = self.get_object(request, object_id)
+        if order is None:
+            self.message_user(request, "Order not found.", level=messages.ERROR)
+        else:
+            create_chalan(order, include_price=form.cleaned_data["include_price"], generated_by=request.user)
+            self.message_user(
+                request, f"Generated a chalan for {order.reference_code}.", level=messages.SUCCESS
+            )
+        return admin_action_redirect(request, reverse("admin:orders_order_changelist"))
