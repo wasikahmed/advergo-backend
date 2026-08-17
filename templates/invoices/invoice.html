@@ -7,8 +7,7 @@
   body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a1a1a; font-size: 12px; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #eb2127; padding-bottom: 14px; margin-bottom: 24px; }
   .company-block { display: flex; align-items: center; gap: 12px; }
-  .company-logo { width: 44px; height: 44px; flex-shrink: 0; }
-  .company-name { font-size: 15px; font-weight: bold; color: #010101; margin: 0 0 4px; white-space: nowrap; }
+  .company-logo { height: 58px; width: auto; flex-shrink: 0; }
   .company-detail { color: #555; font-size: 10.5px; line-height: 1.5; }
   .invoice-title { text-align: right; flex-shrink: 0; }
   .invoice-title h1 { font-size: 22px; color: #eb2127; margin: 0; letter-spacing: 1px; }
@@ -34,13 +33,10 @@
 <body>
   <div class="header">
     <div class="company-block">
-      {% if logo_data_uri %}<img class="company-logo" src="{{ logo_data_uri }}" alt="" />{% endif %}
-      <div>
-        <p class="company-name">{{ company.name }}</p>
-        <div class="company-detail">
-          {{ company.head_office }}<br />
-          {{ company.phone }} &middot; {{ company.email }}
-        </div>
+      {% if logo_data_uri %}<img class="company-logo" src="{{ logo_data_uri }}" alt="{{ company.name }}" />{% endif %}
+      <div class="company-detail">
+        {{ company.head_office }}<br />
+        {{ company.phone }} &middot; {{ company.email }}
       </div>
     </div>
     <div class="invoice-title">

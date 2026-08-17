@@ -26,9 +26,9 @@ def _logo_data_uri() -> str:
     path for it -- it renders server-side with no request context, and
     static assets are served by Whitenoise/Cloudinary depending on
     environment, so a plain <img src="/static/..."> isn't reliably
-    reachable from there. Cached: it's the same 14KB file on every PDF.
+    reachable from there. Cached: it's the same file on every PDF.
     """
-    path = settings.BASE_DIR / "static" / "branding" / "icon.png"
+    path = settings.BASE_DIR / "static" / "branding" / "logo.png"
     data = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:image/png;base64,{data}"
 
