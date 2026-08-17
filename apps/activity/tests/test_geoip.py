@@ -20,12 +20,29 @@ def test_resolve_location_returns_empty_when_no_database(settings):
 
 def test_resolve_location_formats_city_and_country():
     fake_response = SimpleNamespace(
-        city=SimpleNamespace(name="Dhaka"), country=SimpleNamespace(name="Bangladesh")
+        city=SimpleNamespace(name="Dhaka"),
+        country=SimpleNamespace(name="Bangladesh"),
+        registered_country=SimpleNamespace(name=None),
     )
     fake_reader = SimpleNamespace(city=lambda ip: fake_response)
 
     with patch("apps.activity.geoip._reader", return_value=fake_reader):
         assert resolve_location("8.8.8.8") == "Dhaka, Bangladesh"
+
+
+def test_resolve_location_falls_back_to_registered_country():
+    # Real-world case: anycast/CDN IPs (e.g. Cloudflare's 1.1.1.1) often have
+    # no `country` (where it's actually used) but do have
+    # `registered_country` (where the block was allocated).
+    fake_response = SimpleNamespace(
+        city=SimpleNamespace(name=None),
+        country=SimpleNamespace(name=None),
+        registered_country=SimpleNamespace(name="Australia"),
+    )
+    fake_reader = SimpleNamespace(city=lambda ip: fake_response)
+
+    with patch("apps.activity.geoip._reader", return_value=fake_reader):
+        assert resolve_location("1.1.1.1") == "Australia"
 
 
 def test_resolve_location_handles_address_not_found():

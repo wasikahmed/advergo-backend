@@ -36,5 +36,10 @@ def resolve_location(ip_address: str) -> str:
     except (geoip2.errors.AddressNotFoundError, ValueError):
         return ""
 
-    parts = [response.city.name, response.country.name]
+    # Some IPs (anycast/CDN ranges are the common case -- e.g. 1.1.1.1) have
+    # no `country` (where it's actually used) but do have
+    # `registered_country` (where the block was allocated) -- fall back
+    # rather than silently dropping the country for those.
+    country = response.country.name or response.registered_country.name
+    parts = [response.city.name, country]
     return ", ".join(p for p in parts if p)

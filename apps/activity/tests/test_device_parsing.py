@@ -35,9 +35,5 @@ def test_describe_location_loopback():
     assert _describe_location("127.0.0.1") == "Local network"
 
 
-def test_describe_location_public_ip_is_unresolved_for_now():
-    assert _describe_location("8.8.8.8") == ""
-
-
 def test_describe_location_none():
     assert _describe_location(None) == ""
