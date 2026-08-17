@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+{% load i18n unfold %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+    {% if dashboard_sections %}
+        <div class="flex flex-col gap-6 mb-8">
+            {% for section in dashboard_sections %}
+                <div>
+                    {% component "unfold/components/title.html" %}{{ section.title }}{% endcomponent %}
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3">
+                        {% for kpi in section.kpis %}
+                            {% component "unfold/components/card.html" %}
+                                <div class="text-font-subtle-light text-sm dark:text-font-subtle-dark">{{ kpi.title }}</div>
+                                <div class="font-semibold text-2xl text-important mt-1">{{ kpi.value }}</div>
+                            {% endcomponent %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+                        {% if section.trend_chart %}
+                            <div class="lg:col-span-2">
+                                {% component "unfold/components/card.html" with title="Last 30 days" %}
+                                    {% component "unfold/components/chart/line.html" with data=section.trend_chart height=220 %}{% endcomponent %}
+                                {% endcomponent %}
+                            </div>
+                        {% endif %}
+
+                        {% if section.status_breakdown %}
+                            <div>
+                                {% component "unfold/components/table.html" with title="By status" table=section.status_breakdown_table %}{% endcomponent %}
+                            </div>
+                        {% endif %}
+
+                        {% if section.channel_breakdown %}
+                            <div>
+                                {% component "unfold/components/table.html" with title="By channel" table=section.channel_breakdown_table %}{% endcomponent %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if section.recent_activity %}
+                        <div class="mt-4">
+                            {% component "unfold/components/table.html" with title="Recent activity" table=section.recent_activity %}{% endcomponent %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="flex flex-col lg:flex-row lg:gap-8">
+        <div class="grow">
+            {% include "unfold/helpers/app_list_default.html" %}
+        </div>
+
+        {% include "unfold/helpers/history.html" %}
+    </div>
+{% endblock %}

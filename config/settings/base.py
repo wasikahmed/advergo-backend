@@ -331,6 +331,7 @@ def _nav_permission(codename):
 UNFOLD = {
     "SITE_TITLE": "Advergo Admin",
     "SITE_HEADER": "Advergo Sports & Fashion Wear Ltd.",
+    "DASHBOARD_CALLBACK": "apps.core.dashboard.dashboard_callback",
     "SITE_LOGO": {
         "light": lambda request: static("branding/logo.png"),
         "dark": lambda request: static("branding/logo-dark.png"),
