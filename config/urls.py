@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
-from apps.users import admin_2fa, admin_views
+from apps.users import admin_2fa, admin_google, admin_views
 
 api_v1_patterns = [
     path("auth/", include("apps.users.urls")),
@@ -43,6 +43,7 @@ urlpatterns = [
         name="password_reset_complete",
     ),
     path("admin-2fa/verify/", admin_2fa.verify, name="admin-2fa-verify"),
+    path("admin-google-login/", admin_google.admin_google_login, name="admin-google-login"),
     path(settings.ADMIN_URL, admin.site.urls),
     path("api/v1/", include(api_v1_patterns)),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

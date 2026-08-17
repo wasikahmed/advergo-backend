@@ -84,7 +84,7 @@ def test_google_login_activates_and_backfills_a_shell_account(api_client, settin
     assert shell.is_active is False
     assert shell.full_name == ""
 
-    with patch("apps.users.views.google_id_token.verify_oauth2_token") as verify:
+    with patch("apps.users.google_auth.google_id_token.verify_oauth2_token") as verify:
         verify.return_value = {
             "email": "google.lead@example.com",
             "email_verified": True,

@@ -177,7 +177,7 @@ def test_google_login_disabled_without_client_id(api_client, settings):
 
 def test_google_login_creates_user_from_verified_token(api_client, settings):
     settings.GOOGLE_CLIENT_ID = "test-client-id"
-    with patch("apps.users.views.google_id_token.verify_oauth2_token") as verify:
+    with patch("apps.users.google_auth.google_id_token.verify_oauth2_token") as verify:
         verify.return_value = {
             "email": "googleuser@example.com",
             "email_verified": True,
@@ -197,7 +197,7 @@ def test_google_login_creates_user_from_verified_token(api_client, settings):
 
 def test_google_login_rejects_unverified_email(api_client, settings):
     settings.GOOGLE_CLIENT_ID = "test-client-id"
-    with patch("apps.users.views.google_id_token.verify_oauth2_token") as verify:
+    with patch("apps.users.google_auth.google_id_token.verify_oauth2_token") as verify:
         verify.return_value = {"email": "unverified@example.com", "email_verified": False}
         response = api_client.post("/api/v1/auth/google/", {"idToken": "fake-token"})
     assert response.status_code == status.HTTP_400_BAD_REQUEST

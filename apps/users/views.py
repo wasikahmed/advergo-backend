@@ -4,8 +4,6 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token as google_id_token
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -16,6 +14,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.core.permissions import IsAdmin
 
+from .google_auth import InvalidGoogleToken, verify_google_id_token
 from .invites import send_staff_invite_email
 from .models import StaffInvite
 from .otp import (
@@ -253,17 +252,11 @@ class GoogleLoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
 
         try:
-            payload = google_id_token.verify_oauth2_token(
-                serializer.validated_data["id_token"],
-                google_requests.Request(),
-                settings.GOOGLE_CLIENT_ID,
-            )
-        except ValueError as e:
-            raise ValidationError({"id_token": "Invalid Google token."}) from e
+            payload = verify_google_id_token(serializer.validated_data["id_token"])
+        except InvalidGoogleToken as e:
+            raise ValidationError({"id_token": str(e)}) from e
 
-        email = payload.get("email")
-        if not email or not payload.get("email_verified"):
-            raise ValidationError({"id_token": "Google account has no verified email."})
+        email = payload["email"]
 
         user, created = User.objects.get_or_create(
             email__iexact=email,
