@@ -314,6 +314,19 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
 # Branding assets live in static/branding/ (cropped from the frontend's own
 # logo-header.png so the admin matches the storefront instead of Unfold's
 # default look).
+
+
+def _nav_permission(codename):
+    """
+    Gates a SIDEBAR nav item on a real Django permission (app_label.view_x),
+    not just is_staff -- Unfold hides the item's <li> when this returns False,
+    and its own template CSS (has-[ol]:has-[li]:block) collapses the whole
+    section header/separator too once every item in it is hidden, so a role
+    with no permissions in a section never sees that section at all.
+    """
+    return lambda request: request.user.has_perm(codename)
+
+
 UNFOLD = {
     "SITE_TITLE": "Advergo Admin",
     "SITE_HEADER": "Advergo Sports & Fashion Wear Ltd.",
@@ -387,11 +400,13 @@ UNFOLD = {
                         "title": _("Quote requests"),
                         "icon": "request_quote",
                         "link": reverse_lazy("admin:quotes_quoterequest_changelist"),
+                        "permission": _nav_permission("quotes.view_quoterequest"),
                     },
                     {
                         "title": _("Orders"),
                         "icon": "shopping_cart",
                         "link": reverse_lazy("admin:orders_order_changelist"),
+                        "permission": _nav_permission("orders.view_order"),
                     },
                 ],
             },
@@ -404,16 +419,19 @@ UNFOLD = {
                         "title": _("Invoices"),
                         "icon": "receipt_long",
                         "link": reverse_lazy("admin:invoices_invoice_changelist"),
+                        "permission": _nav_permission("invoices.view_invoice"),
                     },
                     {
                         "title": _("Quotations"),
                         "icon": "description",
                         "link": reverse_lazy("admin:invoices_quotation_changelist"),
+                        "permission": _nav_permission("invoices.view_quotation"),
                     },
                     {
                         "title": _("Chalans"),
                         "icon": "local_shipping",
                         "link": reverse_lazy("admin:invoices_chalan_changelist"),
+                        "permission": _nav_permission("invoices.view_chalan"),
                     },
                 ],
             },
@@ -426,26 +444,31 @@ UNFOLD = {
                         "title": _("Categories"),
                         "icon": "category",
                         "link": reverse_lazy("admin:catalog_category_changelist"),
+                        "permission": _nav_permission("catalog.view_category"),
                     },
                     {
                         "title": _("Products"),
                         "icon": "inventory_2",
                         "link": reverse_lazy("admin:catalog_product_changelist"),
+                        "permission": _nav_permission("catalog.view_product"),
                     },
                     {
                         "title": _("Fabrics"),
                         "icon": "texture",
                         "link": reverse_lazy("admin:catalog_fabric_changelist"),
+                        "permission": _nav_permission("catalog.view_fabric"),
                     },
                     {
                         "title": _("Designs"),
                         "icon": "palette",
                         "link": reverse_lazy("admin:catalog_design_changelist"),
+                        "permission": _nav_permission("catalog.view_design"),
                     },
                     {
                         "title": _("Size chart rows"),
                         "icon": "straighten",
                         "link": reverse_lazy("admin:catalog_sizechartrow_changelist"),
+                        "permission": _nav_permission("catalog.view_sizechartrow"),
                     },
                 ],
             },
@@ -458,16 +481,19 @@ UNFOLD = {
                         "title": _("Fabric price rules"),
                         "icon": "payments",
                         "link": reverse_lazy("admin:pricing_fabricpricerule_changelist"),
+                        "permission": _nav_permission("pricing.view_fabricpricerule"),
                     },
                     {
                         "title": _("Category price rules"),
                         "icon": "payments",
                         "link": reverse_lazy("admin:pricing_categorypricerule_changelist"),
+                        "permission": _nav_permission("pricing.view_categorypricerule"),
                     },
                     {
                         "title": _("Quantity discount tiers"),
                         "icon": "percent",
                         "link": reverse_lazy("admin:pricing_quantitydiscounttier_changelist"),
+                        "permission": _nav_permission("pricing.view_quantitydiscounttier"),
                     },
                 ],
             },
@@ -480,66 +506,79 @@ UNFOLD = {
                         "title": _("Banners"),
                         "icon": "view_carousel",
                         "link": reverse_lazy("admin:content_banner_changelist"),
+                        "permission": _nav_permission("content.view_banner"),
                     },
                     {
                         "title": _("Home section banners"),
                         "icon": "view_carousel",
                         "link": reverse_lazy("admin:content_homesectionbanner_changelist"),
+                        "permission": _nav_permission("content.view_homesectionbanner"),
                     },
                     {
                         "title": _("Stats"),
                         "icon": "bar_chart",
                         "link": reverse_lazy("admin:content_stat_changelist"),
+                        "permission": _nav_permission("content.view_stat"),
                     },
                     {
                         "title": _("Achievements"),
                         "icon": "military_tech",
                         "link": reverse_lazy("admin:content_achievement_changelist"),
+                        "permission": _nav_permission("content.view_achievement"),
                     },
                     {
                         "title": _("Client logos"),
                         "icon": "business",
                         "link": reverse_lazy("admin:content_clientlogo_changelist"),
+                        "permission": _nav_permission("content.view_clientlogo"),
                     },
                     {
                         "title": _("Team members"),
                         "icon": "groups",
                         "link": reverse_lazy("admin:content_teammember_changelist"),
+                        "permission": _nav_permission("content.view_teammember"),
                     },
                     {
                         "title": _("Bank accounts"),
                         "icon": "account_balance",
                         "link": reverse_lazy("admin:content_bankaccount_changelist"),
+                        "permission": _nav_permission("content.view_bankaccount"),
                     },
                     {
                         "title": _("Mobile banking agents"),
                         "icon": "smartphone",
                         "link": reverse_lazy("admin:content_mobilebankingagent_changelist"),
+                        "permission": _nav_permission("content.view_mobilebankingagent"),
                     },
                     {
                         "title": _("Official documents"),
                         "icon": "gavel",
                         "link": reverse_lazy("admin:content_officialdocument_changelist"),
+                        "permission": _nav_permission("content.view_officialdocument"),
                     },
                     {
                         "title": _("Process steps"),
                         "icon": "linear_scale",
                         "link": reverse_lazy("admin:content_processstep_changelist"),
+                        "permission": _nav_permission("content.view_processstep"),
                     },
                     {
                         "title": _("Gallery categories"),
                         "icon": "collections",
                         "link": reverse_lazy("admin:content_gallerycategory_changelist"),
+                        "permission": _nav_permission("content.view_gallerycategory"),
                     },
                     {
                         "title": _("Gallery items"),
                         "icon": "photo_library",
                         "link": reverse_lazy("admin:content_galleryitem_changelist"),
+                        "permission": _nav_permission("content.view_galleryitem"),
                     },
                     {
                         "title": _("Company info"),
                         "icon": "info",
                         "link": reverse_lazy("admin:content_companyinfo_changelist"),
+                        "permission": _nav_permission("content.view_companyinfo"),
                     },
                 ],
             },
@@ -552,11 +591,13 @@ UNFOLD = {
                         "title": _("Reviews"),
                         "icon": "reviews",
                         "link": reverse_lazy("admin:reviews_review_changelist"),
+                        "permission": _nav_permission("reviews.view_review"),
                     },
                     {
                         "title": _("Wishlist items"),
                         "icon": "favorite",
                         "link": reverse_lazy("admin:wishlist_wishlistitem_changelist"),
+                        "permission": _nav_permission("wishlist.view_wishlistitem"),
                     },
                 ],
             },
@@ -569,11 +610,13 @@ UNFOLD = {
                         "title": _("Users"),
                         "icon": "group",
                         "link": reverse_lazy("admin:users_user_changelist"),
+                        "permission": _nav_permission("users.view_user"),
                     },
                     {
                         "title": _("Staff invites"),
                         "icon": "mail",
                         "link": reverse_lazy("admin:users_staffinvite_changelist"),
+                        "permission": _nav_permission("users.view_staffinvite"),
                     },
                 ],
             },
@@ -586,17 +629,13 @@ UNFOLD = {
                         "title": _("Login history"),
                         "icon": "history",
                         "link": reverse_lazy("admin:activity_loginevent_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "activity.view_loginevent"
-                        ),
+                        "permission": _nav_permission("activity.view_loginevent"),
                     },
                     {
                         "title": _("Activity log"),
                         "icon": "manage_history",
                         "link": reverse_lazy("admin:activity_activitylog_changelist"),
-                        "permission": lambda request: request.user.has_perm(
-                            "activity.view_activitylog"
-                        ),
+                        "permission": _nav_permission("activity.view_activitylog"),
                     },
                 ],
             },
