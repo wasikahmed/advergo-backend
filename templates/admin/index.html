@@ -9,22 +9,30 @@
 
 {% block content %}
     {% if dashboard_sections %}
-        <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-font-subtle-light text-sm dark:text-font-subtle-dark">Insights range</span>
-            <div class="flex gap-1 bg-base-50 p-1 rounded-default dark:bg-base-900">
-                {% for option in dashboard_range_options %}
-                    <a href="?days={{ option }}"
-                       class="px-3 py-1 rounded-default text-sm {% if option == dashboard_range_days %}bg-white font-semibold text-important shadow-xs dark:bg-base-700{% else %}text-font-subtle-light dark:text-font-subtle-dark{% endif %}">
-                        {{ option }}d
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-
         <div class="flex flex-col gap-6 mb-8">
             {% for section in dashboard_sections %}
                 <div>
-                    {% component "unfold/components/title.html" %}{{ section.title }}{% endcomponent %}
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        {% component "unfold/components/title.html" %}{{ section.title }}{% endcomponent %}
+
+                        <form method="get" class="flex items-center gap-2">
+                            {% for other in dashboard_all_ranges %}
+                                {% if other.key != section.range_key %}
+                                    <input type="hidden" name="{{ other.key }}_from" value="{{ other.start|date:'Y-m-d' }}">
+                                    <input type="hidden" name="{{ other.key }}_to" value="{{ other.end|date:'Y-m-d' }}">
+                                {% endif %}
+                            {% endfor %}
+                            <input type="date" name="{{ section.range_key }}_from" value="{{ section.range_start|date:'Y-m-d' }}"
+                                   class="bg-white border border-base-200 px-2 py-1 rounded-default text-sm dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark">
+                            <span class="text-font-subtle-light text-sm dark:text-font-subtle-dark">to</span>
+                            <input type="date" name="{{ section.range_key }}_to" value="{{ section.range_end|date:'Y-m-d' }}"
+                                   class="bg-white border border-base-200 px-2 py-1 rounded-default text-sm dark:bg-base-900 dark:border-base-700 dark:text-font-default-dark">
+                            <button type="submit"
+                                    class="bg-base-900 font-medium px-3 py-1 rounded-default text-sm text-white dark:bg-base-100 dark:text-base-900">
+                                Apply
+                            </button>
+                        </form>
+                    </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3">
                         {% for kpi in section.kpis %}
@@ -38,7 +46,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
                         {% if section.trend_chart %}
                             <div class="lg:col-span-2">
-                                {% component "unfold/components/card.html" with title=dashboard_range_label %}
+                                {% component "unfold/components/card.html" with title="Trend" %}
                                     {% component "unfold/components/chart/line.html" with data=section.trend_chart height=220 %}{% endcomponent %}
                                 {% endcomponent %}
                             </div>
@@ -56,12 +64,6 @@
                             </div>
                         {% endif %}
                     </div>
-
-                    {% if section.recent_activity %}
-                        <div class="mt-4">
-                            {% component "unfold/components/table.html" with title="Recent activity" table=section.recent_activity %}{% endcomponent %}
-                        </div>
-                    {% endif %}
                 </div>
             {% endfor %}
         </div>
