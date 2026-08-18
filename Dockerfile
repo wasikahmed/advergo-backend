@@ -26,7 +26,7 @@ RUN uv sync --frozen --no-dev
 RUN chmod +x docker-entrypoint.sh
 
 RUN useradd --create-home --uid 1000 appuser \
-    && mkdir -p /app/staticfiles /app/media \
+    && mkdir -p /app/staticfiles /app/media /app/geoip \
     && chown -R appuser:appuser /app
 USER appuser
 

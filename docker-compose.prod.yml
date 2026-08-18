@@ -48,6 +48,11 @@ services:
     volumes:
       - advergo_media_prod:/app/media
       - advergo_static_prod:/app/staticfiles
+      # GeoLite2-City.mmdb (apps.activity geolocation) -- without a
+      # persistent volume, the entrypoint's auto-download would have to
+      # re-fetch it from MaxMind on every deploy, since the image itself
+      # doesn't ship the file.
+      - advergo_geoip_prod:/app/geoip
     depends_on:
       db:
         condition: service_healthy
@@ -72,3 +77,4 @@ volumes:
   advergo_redisdata_prod:
   advergo_media_prod:
   advergo_static_prod:
+  advergo_geoip_prod:
