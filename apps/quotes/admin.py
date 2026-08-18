@@ -37,7 +37,9 @@ class ConvertToOrderForm(forms.Form):
     rarely converts exactly as first asked. The QuoteRequest itself is
     never touched by this; only the new Order gets these final values."""
 
-    total_quantity = forms.IntegerField(min_value=1, label="Quantity", widget=forms.NumberInput(attrs=_input_attrs))
+    total_quantity = forms.IntegerField(
+        min_value=1, label="Quantity", widget=forms.NumberInput(attrs=_input_attrs)
+    )
     size_breakdown = forms.CharField(
         required=False, label="Size breakdown", widget=forms.TextInput(attrs=_input_attrs)
     )
@@ -49,7 +51,9 @@ class ConvertToOrderForm(forms.Form):
         widget=forms.NumberInput(attrs=_input_attrs),
     )
     delivery_address = forms.CharField(
-        required=False, label="Delivery address", widget=forms.Textarea(attrs={**_input_attrs, "rows": 2})
+        required=False,
+        label="Delivery address",
+        widget=forms.Textarea(attrs={**_input_attrs, "rows": 2}),
     )
 
     def __init__(self, request, object_id=None, *args, **kwargs):
@@ -137,7 +141,9 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
             obj.reference_code = generate_reference_code("QR")
             if not obj.user_id:
                 obj.user = get_or_create_guest_user(email=obj.email, phone=obj.phone)
-            estimate = estimate_price(fabric=obj.fabric, category=obj.category, quantity=obj.quantity)
+            estimate = estimate_price(
+                fabric=obj.fabric, category=obj.category, quantity=obj.quantity
+            )
             obj.estimated_price_low = estimate.unit_price_low * obj.quantity
             obj.estimated_price_high = estimate.unit_price_high * obj.quantity
         super().save_model(request, obj, form, change)

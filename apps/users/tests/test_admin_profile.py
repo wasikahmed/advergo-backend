@@ -12,7 +12,10 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def staff_client():
     staff = UserFactory(
-        email="profileowner@example.com", full_name="Original Name", is_staff=True, is_superuser=False
+        email="profileowner@example.com",
+        full_name="Original Name",
+        is_staff=True,
+        is_superuser=False,
     )
     client = Client()
     client.force_login(staff)
@@ -65,7 +68,8 @@ def test_staff_can_upload_an_avatar(staff_client, settings):
     settings.ALLOWED_HOSTS = ["*"]
 
     image = SimpleUploadedFile(
-        "avatar.gif", b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
+        "avatar.gif",
+        b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00!\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;",
         content_type="image/gif",
     )
     response = client.post(

@@ -58,6 +58,7 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "drf_spectacular",
     "simple_history",
+    "axes",
 ]
 
 LOCAL_APPS = [
@@ -96,6 +97,10 @@ MIDDLEWARE = [
     # Populates HistoricalRecords.history_user automatically from the
     # request -- without this, every .save() needs _history_user set by hand.
     "simple_history.middleware.HistoryRequestMiddleware",
+    # Must be last -- django-axes docs require it after AuthenticationMiddleware
+    # so it can see request.user, and it needs to be the final say on whether
+    # a login request is allowed through.
+    "axes.middleware.AxesMiddleware",
 ]
 
 # Django's SecurityMiddleware default ("same-origin") severs window.opener
@@ -134,7 +139,34 @@ DATABASES = {
 }
 
 AUTH_USER_MODEL = "users.User"
-AUTHENTICATION_BACKENDS = ["apps.users.backends.EmailOrPhoneBackend"]
+AUTHENTICATION_BACKENDS = [
+    # Must come first -- checked before the real credential backend below so
+    # a locked-out username/IP is rejected without even touching the password.
+    "axes.backends.AxesStandaloneBackend",
+    "apps.users.backends.EmailOrPhoneBackend",
+]
+
+# --- Brute-force protection on the admin login form (django-axes) -----------
+# DRF's API endpoints already have throttle scopes (see REST_FRAMEWORK above)
+# on a sliding window; scoping axes to the admin site only avoids two
+# different lockout mechanisms both watching the same authenticate() calls
+# for API logins and disagreeing about what "too many attempts" means.
+AXES_ONLY_ADMIN_SITE = True
+AXES_FAILURE_LIMIT = 5
+# Independent per-dimension lockout (not a combined "both must match"): a
+# single username getting hammered from many IPs still locks, and one noisy
+# IP hitting many usernames still locks too, without one legitimate user's
+# typos locking out everyone else behind the same office/NAT IP.
+AXES_LOCKOUT_PARAMETERS = ["username", "ip_address"]
+# Auto-expires rather than needing an admin to manually unlock someone via
+# the database -- a genuine staff member who mistypes their password 5 times
+# just waits half an hour instead of being permanently locked out.
+AXES_COOLOFF_TIME = timedelta(minutes=30)
+AXES_RESET_ON_SUCCESS = True
+# Reuse the same Cloudflare-Tunnel-aware IP resolution already used for
+# LoginEvent.ip_address, so axes locks out the real client IP rather than
+# the tunnel's own address.
+AXES_CLIENT_IP_CALLABLE = "apps.core.utils.get_client_ip"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

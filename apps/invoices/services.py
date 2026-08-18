@@ -56,7 +56,9 @@ def _render_pdf(template_name: str, context: dict) -> bytes:
 
 
 def generate_invoice_number(order) -> str:
-    return _numbered("INV", order.reference_code, "ORD-", Invoice.objects.filter(order=order).count())
+    return _numbered(
+        "INV", order.reference_code, "ORD-", Invoice.objects.filter(order=order).count()
+    )
 
 
 def render_invoice_pdf_bytes(order, invoice_number: str | None = None) -> bytes:
@@ -185,10 +187,14 @@ def generate_and_send_quotation(quote, *, generated_by=None) -> Quotation:
 
 
 def generate_chalan_number(order) -> str:
-    return _numbered("CHLN", order.reference_code, "ORD-", Chalan.objects.filter(order=order).count())
+    return _numbered(
+        "CHLN", order.reference_code, "ORD-", Chalan.objects.filter(order=order).count()
+    )
 
 
-def render_chalan_pdf_bytes(order, chalan_number: str | None = None, *, include_price: bool = False) -> bytes:
+def render_chalan_pdf_bytes(
+    order, chalan_number: str | None = None, *, include_price: bool = False
+) -> bytes:
     return _render_pdf(
         "invoices/chalan.html",
         {

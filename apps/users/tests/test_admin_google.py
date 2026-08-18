@@ -59,7 +59,7 @@ def test_unknown_email_is_refused(settings):
 
 def test_matching_staff_account_logs_in_and_skips_2fa(settings):
     settings.GOOGLE_CLIENT_ID = "test-client-id"
-    admin = UserFactory(email="staffgoogle@example.com", is_staff=True)
+    UserFactory(email="staffgoogle@example.com", is_staff=True)
     client = Client()
 
     with patch("apps.users.google_auth.google_id_token.verify_oauth2_token") as verify:

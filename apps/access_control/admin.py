@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group
-
 from unfold.admin import ModelAdmin
 
 from .forms import RoleForm

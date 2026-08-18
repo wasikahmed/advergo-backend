@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from apps.catalog.models import Category
-from apps.invoices.models import Invoice
 from apps.invoices.serializers import InvoiceSerializer
 
 from .models import Order

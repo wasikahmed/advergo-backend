@@ -30,5 +30,7 @@ def generate_and_send_quotation_task(quote_id, generated_by_id=None):
 @shared_task
 def generate_chalan_task(order_id, include_price=False, generated_by_id=None):
     order = Order.objects.get(id=order_id)
-    chalan = create_chalan(order, include_price=include_price, generated_by=_get_user(generated_by_id))
+    chalan = create_chalan(
+        order, include_price=include_price, generated_by=_get_user(generated_by_id)
+    )
     return chalan.id

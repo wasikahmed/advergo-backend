@@ -9,7 +9,7 @@ from .models import ActivityLog, LoginEvent
 
 
 def _describe_device(user_agent_string: str) -> str:
-    """"Chrome on macOS", "Safari on iPhone", ... -- parsed once at write
+    """ "Chrome on macOS", "Safari on iPhone", ... -- parsed once at write
     time (see LoginEvent.device) rather than on every page view."""
     if not user_agent_string:
         return ""
@@ -25,7 +25,7 @@ def _describe_device(user_agent_string: str) -> str:
 
 
 def _describe_location(ip_address: str | None) -> str:
-    """"Local network" for private/loopback IPs, "City, Country" for public
+    """ "Local network" for private/loopback IPs, "City, Country" for public
     ones via MaxMind GeoLite2 (see apps.activity.geoip) -- blank if that
     database isn't installed or the IP isn't in it."""
     if not ip_address:
@@ -42,7 +42,9 @@ def _describe_location(ip_address: str | None) -> str:
     return resolve_location(ip_address)
 
 
-def log_login(*, request, channel: str, success: bool, user=None, identifier: str = "") -> LoginEvent:
+def log_login(
+    *, request, channel: str, success: bool, user=None, identifier: str = ""
+) -> LoginEvent:
     ip_address = get_client_ip(request)
     user_agent = request.META.get("HTTP_USER_AGENT", "")[:500]
     return LoginEvent.objects.create(

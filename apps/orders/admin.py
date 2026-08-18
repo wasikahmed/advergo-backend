@@ -119,7 +119,9 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         if order is None:
             return HttpResponse("Order not found.", status=404)
         response = HttpResponse(render_invoice_pdf_bytes(order), content_type="application/pdf")
-        response["Content-Disposition"] = f'inline; filename="{order.reference_code}-invoice-preview.pdf"'
+        response["Content-Disposition"] = (
+            f'inline; filename="{order.reference_code}-invoice-preview.pdf"'
+        )
         return response
 
     @action(description="Preview chalan PDF", icon="local_shipping", attrs={"target": "_blank"})
@@ -132,15 +134,23 @@ class OrderAdmin(SimpleHistoryAdmin, ModelAdmin):
         response = HttpResponse(
             render_chalan_pdf_bytes(order, include_price=False), content_type="application/pdf"
         )
-        response["Content-Disposition"] = f'inline; filename="{order.reference_code}-chalan-preview.pdf"'
+        response["Content-Disposition"] = (
+            f'inline; filename="{order.reference_code}-chalan-preview.pdf"'
+        )
         return response
 
     @action(description="Advance to next status", icon="arrow_forward")
     def advance_status_row(self, request, object_id):
         order = self.get_object(request, object_id)
-        idx = _STATUS_PIPELINE.index(order.status) if order and order.status in _STATUS_PIPELINE else None
+        idx = (
+            _STATUS_PIPELINE.index(order.status)
+            if order and order.status in _STATUS_PIPELINE
+            else None
+        )
         if idx is None or idx + 1 >= len(_STATUS_PIPELINE):
-            self.message_user(request, "This order can't be advanced further.", level=messages.WARNING)
+            self.message_user(
+                request, "This order can't be advanced further.", level=messages.WARNING
+            )
         else:
             old_status = order.get_status_display()
             order.status = _STATUS_PIPELINE[idx + 1]

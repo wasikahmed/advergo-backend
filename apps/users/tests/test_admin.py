@@ -52,7 +52,10 @@ def test_pending_invite_is_editable_in_admin(admin_client, group):
     response = client.get(url)
 
     assert response.status_code == 200
-    assert b"Change staff invite" in response.content or response.context["title"] == "Change staff invite"
+    assert (
+        b"Change staff invite" in response.content
+        or response.context["title"] == "Change staff invite"
+    )
 
 
 def test_accepted_invite_is_read_only_in_admin(admin_client, group):

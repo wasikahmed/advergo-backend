@@ -21,7 +21,7 @@ def _reader():
 
 
 def resolve_location(ip_address: str) -> str:
-    """"City, Country", best-effort. Empty string if the database isn't
+    """ "City, Country", best-effort. Empty string if the database isn't
     installed, the IP isn't in it (common for hosting-provider ranges,
     always true for private IPs), or anything else goes wrong -- this is
     a nice-to-have display field, never worth failing a login over."""

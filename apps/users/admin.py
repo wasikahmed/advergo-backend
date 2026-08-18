@@ -66,11 +66,15 @@ class UserAdmin(SimpleHistoryAdmin, ModelAdmin, DjangoUserAdmin):
 
     @action(description="View login history", icon="history")
     def view_login_history_row(self, request, object_id):
-        return redirect(f"{reverse('admin:activity_loginevent_changelist')}?user__id__exact={object_id}")
+        return redirect(
+            f"{reverse('admin:activity_loginevent_changelist')}?user__id__exact={object_id}"
+        )
 
     @action(description="View activity", icon="manage_history")
     def view_activity_row(self, request, object_id):
-        return redirect(f"{reverse('admin:activity_activitylog_changelist')}?actor__id__exact={object_id}")
+        return redirect(
+            f"{reverse('admin:activity_activitylog_changelist')}?actor__id__exact={object_id}"
+        )
 
 
 @admin.register(StaffInvite)
@@ -87,7 +91,14 @@ class StaffInviteAdmin(ModelAdmin):
     list_filter = ["group"]
     search_fields = ["email"]
     ordering = ["-created_at"]
-    readonly_fields = ["token", "invited_by", "expires_at", "accepted_at", "created_at", "updated_at"]
+    readonly_fields = [
+        "token",
+        "invited_by",
+        "expires_at",
+        "accepted_at",
+        "created_at",
+        "updated_at",
+    ]
     autocomplete_fields = ["group"]
     actions = ["resend_invite"]
     actions_row = ["resend_invite_row"]
@@ -161,5 +172,7 @@ class StaffInviteAdmin(ModelAdmin):
             )
         else:
             self._resend(request, invite)
-            self.message_user(request, f"Invite email resent to {invite.email}.", level=messages.SUCCESS)
+            self.message_user(
+                request, f"Invite email resent to {invite.email}.", level=messages.SUCCESS
+            )
         return redirect(reverse("admin:users_staffinvite_changelist"))

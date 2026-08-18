@@ -6,9 +6,10 @@ from .base import *  # noqa: F403
 
 DEBUG = False
 
-# Traefik terminates TLS and forwards plain HTTP internally on the docker
-# network -- without this, Django sees every request as HTTP and
-# SECURE_SSL_REDIRECT below causes an infinite redirect loop.
+# Cloudflare Tunnel terminates TLS at Cloudflare's edge and forwards plain
+# HTTP to this container over localhost -- without this, Django sees every
+# request as HTTP and SECURE_SSL_REDIRECT below causes an infinite redirect
+# loop.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 

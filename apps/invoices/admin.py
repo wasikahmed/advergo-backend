@@ -85,7 +85,9 @@ class InvoiceAdmin(ModelAdmin):
                 description=f"Generated invoice {new_invoice.invoice_number}",
             )
             self.message_user(
-                request, f"Generated a new invoice for {invoice.order.reference_code}.", level=messages.SUCCESS
+                request,
+                f"Generated a new invoice for {invoice.order.reference_code}.",
+                level=messages.SUCCESS,
             )
         return admin_action_redirect(request, reverse("admin:invoices_invoice_changelist"))
 
@@ -101,7 +103,9 @@ class InvoiceAdmin(ModelAdmin):
                 target=order,
                 description=f"Generated invoice {new_invoice.invoice_number}",
             )
-        self.message_user(request, f"Generated {len(orders)} new invoice(s).", level=messages.SUCCESS)
+        self.message_user(
+            request, f"Generated {len(orders)} new invoice(s).", level=messages.SUCCESS
+        )
 
 
 @admin.register(Quotation)
@@ -152,7 +156,9 @@ class QuotationAdmin(ModelAdmin):
         if quotation is None:
             self.message_user(request, "Quotation not found.", level=messages.ERROR)
         else:
-            new_quotation = generate_and_send_quotation(quotation.quote_request, generated_by=request.user)
+            new_quotation = generate_and_send_quotation(
+                quotation.quote_request, generated_by=request.user
+            )
             log_activity(
                 actor=request.user,
                 request=request,
@@ -179,7 +185,9 @@ class QuotationAdmin(ModelAdmin):
                 target=quote,
                 description=f"Generated quotation {new_quotation.quotation_number}",
             )
-        self.message_user(request, f"Generated {len(quotes)} new quotation(s).", level=messages.SUCCESS)
+        self.message_user(
+            request, f"Generated {len(quotes)} new quotation(s).", level=messages.SUCCESS
+        )
 
 
 @admin.register(Chalan)
@@ -242,14 +250,18 @@ class ChalanAdmin(ModelAdmin):
                 description=f"Generated chalan {new_chalan.chalan_number}",
             )
             self.message_user(
-                request, f"Generated a new chalan for {chalan.order.reference_code}.", level=messages.SUCCESS
+                request,
+                f"Generated a new chalan for {chalan.order.reference_code}.",
+                level=messages.SUCCESS,
             )
         return admin_action_redirect(request, reverse("admin:invoices_chalan_changelist"))
 
     def _regenerate(self, request, queryset, *, include_price):
         orders = {chalan.order for chalan in queryset}
         for order in orders:
-            new_chalan = create_chalan(order, include_price=include_price, generated_by=request.user)
+            new_chalan = create_chalan(
+                order, include_price=include_price, generated_by=request.user
+            )
             log_activity(
                 actor=request.user,
                 request=request,
@@ -257,7 +269,9 @@ class ChalanAdmin(ModelAdmin):
                 target=order,
                 description=f"Generated chalan {new_chalan.chalan_number}",
             )
-        self.message_user(request, f"Generated {len(orders)} new chalan(s).", level=messages.SUCCESS)
+        self.message_user(
+            request, f"Generated {len(orders)} new chalan(s).", level=messages.SUCCESS
+        )
 
     @admin.action(description="Regenerate (new dated copy) without price")
     def regenerate_without_price(self, request, queryset):

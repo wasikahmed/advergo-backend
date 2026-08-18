@@ -7,7 +7,6 @@ from django.test import Client
 from rest_framework.test import APIClient
 
 from apps.activity.models import LoginChannel, LoginEvent
-from apps.users.admin_2fa import SESSION_VERIFIED_KEY
 from apps.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db

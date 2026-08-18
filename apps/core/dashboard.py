@@ -109,7 +109,8 @@ def _orders_section(request, start, end):
     status_counts = dict(orders.values_list("status").annotate(count=Count("id")))
     labels, counts = _daily_trend(orders, start, end)
     status_breakdown = [
-        {"label": label, "value": status_counts.get(value, 0)} for value, label in OrderStatus.choices
+        {"label": label, "value": status_counts.get(value, 0)}
+        for value, label in OrderStatus.choices
     ]
 
     return {
@@ -145,7 +146,8 @@ def _quotes_section(request, start, end):
     status_counts = dict(quotes.values_list("status").annotate(count=Count("id")))
     labels, counts = _daily_trend(quotes, start, end)
     status_breakdown = [
-        {"label": label, "value": status_counts.get(value, 0)} for value, label in QuoteRequestStatus.choices
+        {"label": label, "value": status_counts.get(value, 0)}
+        for value, label in QuoteRequestStatus.choices
     ]
 
     return {

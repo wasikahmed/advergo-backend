@@ -38,7 +38,5 @@ urlpatterns = [
     path("phone/otp/request/", PhoneOTPRequestView.as_view(), name="auth-phone-otp-request"),
     path("phone/otp/verify/", PhoneOTPVerifyView.as_view(), name="auth-phone-otp-verify"),
     path("staff-invites/", StaffInviteCreateView.as_view(), name="auth-staff-invite-create"),
-    path(
-        "staff-invites/accept/", StaffInviteAcceptView.as_view(), name="auth-staff-invite-accept"
-    ),
+    path("staff-invites/accept/", StaffInviteAcceptView.as_view(), name="auth-staff-invite-accept"),
 ]
