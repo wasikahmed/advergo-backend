@@ -1,14 +1,16 @@
 {% with id=widget.attrs.id %}
     <div{% if id %} id="{{ id }}"{% endif %} class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {% for group, options, index in widget.optgroups %}
-            <div class="border border-base-200 rounded-default p-3 dark:border-base-800">
+            <div class="permission-group border border-base-200 rounded-default p-3 dark:border-base-800">
                 {% if group %}
-                    <div class="font-semibold mb-2 text-font-important-light text-sm dark:text-font-important-dark">
-                        {{ group }}
+                    <div class="permission-group-header flex items-center justify-between gap-2 mb-2">
+                        <div class="font-semibold text-font-important-light text-sm dark:text-font-important-dark">
+                            {{ group }}
+                        </div>
                     </div>
                 {% endif %}
 
-                <div class="flex flex-col gap-1.5">
+                <div class="permission-group-options flex flex-col gap-1.5">
                     {% for option in options %}
                         <div>
                             {% include option.template_name with widget=option %}
