@@ -44,14 +44,13 @@ class SizeChartRowAdmin(ModelAdmin):
     list_display = [
         "size_label",
         "category",
+        "age_group",
         "chest_in",
         "length_in",
-        "shoulder_in",
-        "sleeve_in",
         "order",
     ]
-    list_filter = ["category"]
-    ordering = ["category", "order"]
+    list_filter = ["age_group", "category"]
+    ordering = ["category", "age_group", "order"]
     autocomplete_fields = ["category"]
 
 

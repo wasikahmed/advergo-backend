@@ -58,6 +58,11 @@ class Fabric(TimeStampedModel, SoftDeleteModel):
         return self.name
 
 
+class SizeChartAgeGroup(models.TextChoices):
+    ADULT = "adult", "Adult"
+    KIDS = "kids", "Kids"
+
+
 class SizeChartRow(TimeStampedModel):
     """One row (one size label) of the size guide shown on the quote form.
     `category=None` means a general row that applies across all categories;
@@ -71,6 +76,12 @@ class SizeChartRow(TimeStampedModel):
         related_name="size_chart_rows",
         help_text="Leave blank for a general chart shown regardless of category.",
     )
+    age_group = models.CharField(
+        max_length=5,
+        choices=SizeChartAgeGroup.choices,
+        default=SizeChartAgeGroup.ADULT,
+        help_text="Which size chart tab this row belongs to.",
+    )
     size_label = models.CharField(max_length=10, help_text="e.g. S, M, L, XL, XXL")
     chest_in = models.DecimalField(
         "chest (in)", max_digits=5, decimal_places=1, null=True, blank=True
@@ -78,16 +89,10 @@ class SizeChartRow(TimeStampedModel):
     length_in = models.DecimalField(
         "length (in)", max_digits=5, decimal_places=1, null=True, blank=True
     )
-    shoulder_in = models.DecimalField(
-        "shoulder (in)", max_digits=5, decimal_places=1, null=True, blank=True
-    )
-    sleeve_in = models.DecimalField(
-        "sleeve (in)", max_digits=5, decimal_places=1, null=True, blank=True
-    )
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
-        ordering = ["category_id", "order"]
+        ordering = ["category_id", "age_group", "order"]
 
     def __str__(self):
         scope = self.category.name if self.category_id else "General"

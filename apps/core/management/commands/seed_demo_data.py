@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.catalog.models import Category, Fabric, Product, SizeChartRow
+from apps.catalog.models import Category, Fabric, Product, SizeChartAgeGroup, SizeChartRow
 from apps.content.models import (
     Achievement,
     AchievementKind,
@@ -445,39 +445,58 @@ QUANTITY_DISCOUNT_TIERS = [
 # General fallback (category=None) plus a few category/subcategory-specific
 # charts to demonstrate that different garment types get different
 # measurements (a jacket and a trouser aren't sized the same way).
-SIZE_CHARTS = {
+SIZE_CHARTS_ADULT = {
     None: [
-        ("S", "36.0", "26.0", "16.5", "23.0"),
-        ("M", "38.0", "27.0", "17.5", "24.0"),
-        ("L", "40.0", "28.0", "18.5", "25.0"),
-        ("XL", "42.0", "29.0", "19.5", "26.0"),
-        ("XXL", "44.0", "30.0", "20.5", "27.0"),
+        ("S", "36.0", "26.0"),
+        ("M", "38.0", "27.0"),
+        ("L", "40.0", "28.0"),
+        ("XL", "42.0", "29.0"),
+        ("XXL", "44.0", "30.0"),
     ],
     "football": [
-        ("S", "37.0", "25.0", "16.0", "8.0"),
-        ("M", "39.0", "26.0", "17.0", "8.5"),
-        ("L", "41.0", "27.0", "18.0", "9.0"),
-        ("XL", "43.0", "28.0", "19.0", "9.5"),
+        ("S", "37.0", "25.0"),
+        ("M", "39.0", "26.0"),
+        ("L", "41.0", "27.0"),
+        ("XL", "43.0", "28.0"),
     ],
     "polo-full-sleeve": [
-        ("S", "38.0", "27.0", "17.0", "24.0"),
-        ("M", "40.0", "28.0", "18.0", "25.0"),
-        ("L", "42.0", "29.0", "19.0", "26.0"),
-        ("XL", "44.0", "30.0", "20.0", "27.0"),
+        ("S", "38.0", "27.0"),
+        ("M", "40.0", "28.0"),
+        ("L", "42.0", "29.0"),
+        ("XL", "44.0", "30.0"),
     ],
     "winter-jacket": [
-        ("S", "42.0", "26.0", "18.0", "25.0"),
-        ("M", "44.0", "27.0", "19.0", "26.0"),
-        ("L", "46.0", "28.0", "20.0", "27.0"),
-        ("XL", "48.0", "29.0", "21.0", "28.0"),
+        ("S", "42.0", "26.0"),
+        ("M", "44.0", "27.0"),
+        ("L", "46.0", "28.0"),
+        ("XL", "48.0", "29.0"),
     ],
     # Fields are reused loosely here (chest->waist, length->inseam) rather
     # than adding trouser-specific columns to the model for a handful of rows.
     "winter-trouser": [
-        ("S", "30.0", "38.0", None, None),
-        ("M", "32.0", "39.0", None, None),
-        ("L", "34.0", "40.0", None, None),
-        ("XL", "36.0", "41.0", None, None),
+        ("S", "30.0", "38.0"),
+        ("M", "32.0", "39.0"),
+        ("L", "34.0", "40.0"),
+        ("XL", "36.0", "41.0"),
+    ],
+}
+
+# Kids sizing is age-labelled (not S/M/L) and only stocked for the general
+# chart and football -- the categories customers actually order kids kits
+# for.
+SIZE_CHARTS_KIDS = {
+    None: [
+        ("3-4Y", "24.0", "16.0"),
+        ("5-6Y", "26.0", "18.0"),
+        ("7-8Y", "28.0", "20.0"),
+        ("9-10Y", "30.0", "22.0"),
+        ("11-12Y", "32.0", "24.0"),
+    ],
+    "football": [
+        ("3-4Y", "25.0", "15.0"),
+        ("5-6Y", "27.0", "17.0"),
+        ("7-8Y", "29.0", "19.0"),
+        ("9-10Y", "31.0", "21.0"),
     ],
 }
 
@@ -586,22 +605,25 @@ class Command(BaseCommand):
         self.stdout.write(f"  quantity discount tiers: {len(QUANTITY_DISCOUNT_TIERS)}")
 
         size_chart_count = 0
-        for slug, rows in SIZE_CHARTS.items():
-            # Not just `categories` (top-level only) -- some charts are
-            # scoped to a subcategory slug, e.g. "winter-jacket".
-            category = Category.objects.get(slug=slug) if slug else None
-            for size_label, chest, length, shoulder, sleeve in rows:
-                SizeChartRow.objects.update_or_create(
-                    category=category,
-                    size_label=size_label,
-                    defaults={
-                        "chest_in": chest,
-                        "length_in": length,
-                        "shoulder_in": shoulder,
-                        "sleeve_in": sleeve,
-                    },
-                )
-                size_chart_count += 1
+        for age_group, charts in (
+            (SizeChartAgeGroup.ADULT, SIZE_CHARTS_ADULT),
+            (SizeChartAgeGroup.KIDS, SIZE_CHARTS_KIDS),
+        ):
+            for slug, rows in charts.items():
+                # Not just `categories` (top-level only) -- some charts are
+                # scoped to a subcategory slug, e.g. "winter-jacket".
+                category = Category.objects.get(slug=slug) if slug else None
+                for size_label, chest, length in rows:
+                    SizeChartRow.objects.update_or_create(
+                        category=category,
+                        age_group=age_group,
+                        size_label=size_label,
+                        defaults={
+                            "chest_in": chest,
+                            "length_in": length,
+                        },
+                    )
+                    size_chart_count += 1
         self.stdout.write(f"  size chart rows: {size_chart_count}")
 
         self.stdout.write(self.style.SUCCESS("Seed complete."))

@@ -34,11 +34,10 @@ class SizeChartRowSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "category_slug",
+            "age_group",
             "size_label",
             "chest_in",
             "length_in",
-            "shoulder_in",
-            "sleeve_in",
         ]
 
 
