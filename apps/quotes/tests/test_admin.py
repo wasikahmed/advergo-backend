@@ -111,7 +111,9 @@ def test_convert_dialog_refuses_a_quote_that_already_has_an_order(admin_client, 
     assert Order.objects.filter(quote_request=quote).count() == 1
 
 
-def test_convert_dialog_allows_a_quote_whose_status_was_edited_by_hand(admin_client, quote, settings):
+def test_convert_dialog_allows_a_quote_whose_status_was_edited_by_hand(
+    admin_client, quote, settings
+):
     """
     status is a plain editable field (including list_editable on the
     changelist), so it can say "Converted to order" from a manual edit that
