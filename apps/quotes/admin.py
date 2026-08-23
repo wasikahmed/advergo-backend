@@ -173,6 +173,7 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
         quote = self.get_object(request, object_id)
         if quote is None or quote.status == QuoteRequestStatus.CONVERTED:
             self.message_user(request, "This quote was already converted.", level=messages.WARNING)
+            redirect_url = reverse("admin:quotes_quoterequest_changelist")
         else:
             order = convert_quote_to_order(
                 quote,
@@ -192,7 +193,11 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
             self.message_user(
                 request, f"Created order {order.reference_code}.", level=messages.SUCCESS
             )
-        return admin_action_redirect(request, reverse("admin:quotes_quoterequest_changelist"))
+            # Land on the new order itself -- staying on the quotes list left
+            # the order easy to miss (nothing there visibly changes besides
+            # the status column) even though it was created successfully.
+            redirect_url = reverse("admin:orders_order_change", args=[order.pk])
+        return admin_action_redirect(request, redirect_url)
 
     @admin.action(description="Generate quotation PDF and email to customer")
     def generate_and_send_quotation(self, request, queryset):
