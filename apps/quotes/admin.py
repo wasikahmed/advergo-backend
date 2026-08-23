@@ -13,7 +13,7 @@ from apps.invoices.models import Quotation
 from apps.pricing.services import estimate_price
 from apps.users.services import get_or_create_guest_user
 
-from .models import QuoteRequest, QuoteRequestStatus
+from .models import QuoteRequest
 from .services import convert_quote_to_order
 
 
@@ -171,9 +171,22 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
     )
     def convert_to_order_row(self, request, form, object_id):
         quote = self.get_object(request, object_id)
-        if quote is None or quote.status == QuoteRequestStatus.CONVERTED:
-            self.message_user(request, "This quote was already converted.", level=messages.WARNING)
+        existing_order = quote.orders.first() if quote is not None else None
+        # Checking for a real Order row here instead of trusting
+        # quote.status: status is a plain editable field (including inline
+        # on the changelist), so it can end up saying "Converted to order"
+        # from a manual edit that never actually created one -- which would
+        # otherwise permanently block ever converting that quote for real.
+        if quote is None:
+            self.message_user(request, "Quote not found.", level=messages.WARNING)
             redirect_url = reverse("admin:quotes_quoterequest_changelist")
+        elif existing_order is not None:
+            self.message_user(
+                request,
+                f"This quote was already converted to order {existing_order.reference_code}.",
+                level=messages.WARNING,
+            )
+            redirect_url = reverse("admin:orders_order_change", args=[existing_order.pk])
         else:
             order = convert_quote_to_order(
                 quote,

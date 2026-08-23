@@ -81,7 +81,44 @@ def test_convert_dialog_lets_staff_override_values_without_touching_the_quote(
     assert order.created_by == admin
 
 
-def test_convert_dialog_refuses_an_already_converted_quote(admin_client, quote, settings):
+def test_convert_dialog_refuses_a_quote_that_already_has_an_order(admin_client, quote, settings):
+    client, admin = admin_client
+    settings.ALLOWED_HOSTS = ["*"]
+    Order.objects.create(
+        reference_code="ORD-EXISTING1",
+        quote_request=quote,
+        name=quote.name,
+        phone=quote.phone,
+        total_quantity=quote.quantity,
+        created_by=admin,
+    )
+
+    url = reverse("admin:quotes_quoterequest_convert_to_order_row", args=[quote.id])
+    response = client.post(
+        url,
+        {
+            "_form_submitted": "true",
+            "total_quantity": quote.quantity,
+            "size_breakdown": "",
+            "unit_price": "",
+            "delivery_address": "",
+        },
+    )
+
+    # No has_*_permission gate on this action -- the in-body guard handles
+    # it: redirects with a warning, no duplicate order.
+    assert response.status_code == 302
+    assert Order.objects.filter(quote_request=quote).count() == 1
+
+
+def test_convert_dialog_allows_a_quote_whose_status_was_edited_by_hand(admin_client, quote, settings):
+    """
+    status is a plain editable field (including list_editable on the
+    changelist), so it can say "Converted to order" from a manual edit that
+    never actually created one. The guard has to check for a real Order
+    row, not the status label, or a quote like this could never be
+    genuinely converted.
+    """
     client, _ = admin_client
     settings.ALLOWED_HOSTS = ["*"]
     quote.status = QuoteRequestStatus.CONVERTED
@@ -99,7 +136,5 @@ def test_convert_dialog_refuses_an_already_converted_quote(admin_client, quote, 
         },
     )
 
-    # No has_*_permission gate on this action -- the in-body guard handles
-    # it: redirects with a warning, no duplicate order.
     assert response.status_code == 302
-    assert not Order.objects.filter(quote_request=quote).exists()
+    assert Order.objects.filter(quote_request=quote).exists()
