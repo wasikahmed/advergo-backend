@@ -32,8 +32,15 @@ class FabricAdmin(ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(ModelAdmin):
-    list_display = ["name", "category", "category_section",
-                    "price_range", "is_featured", "is_active", "order"]
+    list_display = [
+        "name",
+        "category",
+        "category_section",
+        "price_range",
+        "is_featured",
+        "is_active",
+        "order",
+    ]
     list_filter = ["is_featured", "is_active", "category__parent"]
     search_fields = ["name", "fabric"]
     ordering = ["order", "name"]
@@ -49,8 +56,9 @@ class ProductAdmin(ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.name == "category":
-            field.queryset = field.queryset.filter(
-                parent__isnull=False).filter(children__isnull=True)
+            field.queryset = field.queryset.filter(parent__isnull=False).filter(
+                children__isnull=True
+            )
         return field
 
 
