@@ -32,11 +32,26 @@ class FabricAdmin(ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(ModelAdmin):
-    list_display = ["name", "category", "price_range", "is_featured", "is_active", "order"]
-    list_filter = ["category", "is_featured", "is_active"]
+    list_display = ["name", "category", "category_section",
+                    "price_range", "is_featured", "is_active", "order"]
+    list_filter = ["is_featured", "is_active", "category__parent"]
     search_fields = ["name", "fabric"]
     ordering = ["order", "name"]
     autocomplete_fields = ["category"]
+
+    @admin.display(description="Section")
+    def category_section(self, obj):
+        return obj.category.section if obj.category_id else "-"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("category", "category__parent")
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == "category":
+            field.queryset = field.queryset.filter(
+                parent__isnull=False).filter(children__isnull=True)
+        return field
 
 
 @admin.register(SizeChartRow)

@@ -15,6 +15,9 @@ class Category(TimeStampedModel):
     Sleeve / Half Sleeve) is a browsable parent whose children are real
     subcategories -- own slug, own image, own page -- not just a filter
     pill. A category with no children is a leaf on its own.
+
+    The top-level node acts as a product section/group. Product uploads should
+    only ever target a leaf category, never a parent section itself.
     """
 
     parent = models.ForeignKey(
@@ -23,11 +26,12 @@ class Category(TimeStampedModel):
         blank=True,
         on_delete=models.CASCADE,
         related_name="children",
-        help_text="Leave blank for a top-level category.",
+        help_text="Leave blank for a top-level category/section.",
     )
     slug = models.SlugField(unique=True, max_length=40)
     name = models.CharField(max_length=80)
-    image = models.ImageField(upload_to=category_image_upload_path, blank=True, null=True)
+    image = models.ImageField(
+        upload_to=category_image_upload_path, blank=True, null=True)
     description = models.CharField(max_length=200, blank=True)
     is_featured = models.BooleanField(
         default=False,
@@ -39,6 +43,28 @@ class Category(TimeStampedModel):
         verbose_name_plural = "categories"
         ordering = ["order", "name"]
 
+    @property
+    def section(self):
+        """Return the top-level section name for this category tree."""
+        root = self if self.parent_id is None else self.get_root()
+        return root.name
+
+    def get_root(self):
+        current = self
+        while current.parent_id is not None:
+            current = current.parent
+        return current
+
+    @property
+    def is_leaf(self):
+        return not self.children.exists()
+
+    def clean(self):
+        super().clean()
+        if self.parent_id and self.parent.parent_id is not None:
+            # One level of nesting is enough for the product UX and admin.
+            raise ValueError("Only one category nesting level is supported.")
+
     def __str__(self):
         return f"{self.parent.name} · {self.name}" if self.parent_id else self.name
 
@@ -48,7 +74,8 @@ class Fabric(TimeStampedModel, SoftDeleteModel):
     grade = models.CharField(max_length=80, blank=True)
     best_for = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to="advergo/fabrics/", blank=True, null=True)
+    image = models.ImageField(
+        upload_to="advergo/fabrics/", blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -82,7 +109,8 @@ class SizeChartRow(TimeStampedModel):
         default=SizeChartAgeGroup.ADULT,
         help_text="Which size chart tab this row belongs to.",
     )
-    size_label = models.CharField(max_length=10, help_text="e.g. S, M, L, XL, XXL")
+    size_label = models.CharField(
+        max_length=10, help_text="e.g. S, M, L, XL, XXL")
     chest_in = models.DecimalField(
         "chest (in)", max_digits=5, decimal_places=1, null=True, blank=True
     )
@@ -101,7 +129,8 @@ class SizeChartRow(TimeStampedModel):
 
 class Product(TimeStampedModel, SoftDeleteModel):
     name = models.CharField(max_length=150)
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT, related_name="products")
     price_range = models.CharField(max_length=60, blank=True)
     fabric = models.CharField(
         max_length=150, blank=True, help_text="Free-text fabric label shown on the card."
@@ -111,16 +140,28 @@ class Product(TimeStampedModel, SoftDeleteModel):
     accent_color = models.CharField(
         max_length=7, default="#eb2127", help_text="Hex color, e.g. #eb2127."
     )
-    image = models.ImageField(upload_to="advergo/products/", blank=True, null=True)
+    image = models.ImageField(
+        upload_to="advergo/products/", blank=True, null=True)
 
     is_featured = models.BooleanField(
         default=False, help_text="Shown in the homepage featured-products section."
     )
-    is_active = models.BooleanField(default=True, help_text="Unpublish without deleting.")
+    is_active = models.BooleanField(
+        default=True, help_text="Unpublish without deleting.")
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["order", "name"]
+
+    def clean(self):
+        super().clean()
+        if self.category_id and self.category.children.exists():
+            raise ValueError(
+                "Products must be assigned to a leaf category, not a parent section.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -142,13 +183,15 @@ class Design(TimeStampedModel, SoftDeleteModel):
     category itself.
     """
 
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="designs")
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT, related_name="designs")
     name = models.CharField(max_length=150, blank=True)
     code = models.CharField(
         max_length=40, blank=True, help_text="Internal reference code shown to staff/customers."
     )
     image = models.ImageField(upload_to=design_upload_path)
-    is_active = models.BooleanField(default=True, help_text="Unpublish without deleting.")
+    is_active = models.BooleanField(
+        default=True, help_text="Unpublish without deleting.")
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
