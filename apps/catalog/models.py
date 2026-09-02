@@ -127,7 +127,31 @@ class SizeChartRow(TimeStampedModel):
 class Product(TimeStampedModel, SoftDeleteModel):
     name = models.CharField(max_length=150)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
-    price_range = models.CharField(max_length=60, blank=True)
+    price_range = models.CharField(
+        max_length=60,
+        blank=True,
+        help_text="Legacy price text shown in some sections; prefer sale_price + list_price for discounts.",
+    )
+    list_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Regular/original price before discount.",
+    )
+    sale_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Discounted selling price shown to customers.",
+    )
+    discount_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        help_text="Discount percentage shown on the product card, e.g. 15.00.",
+    )
     fabric = models.CharField(
         max_length=150, blank=True, help_text="Free-text fabric label shown on the card."
     )
@@ -151,6 +175,21 @@ class Product(TimeStampedModel, SoftDeleteModel):
         super().clean()
         if self.category_id and self.category.children.exists():
             raise ValueError("Products must be assigned to a leaf category, not a parent section.")
+        if (
+            self.list_price is not None
+            and self.sale_price is not None
+            and self.sale_price > self.list_price
+        ):
+            raise ValueError("Sale price cannot be greater than the regular list price.")
+        if (
+            self.sale_price is not None
+            and self.discount_percent == 0
+            and self.list_price is not None
+        ):
+            discount = ((self.list_price - self.sale_price) / self.list_price) * 100
+            self.discount_percent = round(discount, 2)
+        if self.list_price is not None and self.sale_price is None and self.discount_percent > 0:
+            self.sale_price = self.list_price * (1 - (self.discount_percent / 100))
 
     def save(self, *args, **kwargs):
         self.full_clean()

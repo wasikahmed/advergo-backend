@@ -42,16 +42,19 @@ class SizeChartRowSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    # Kept as the category's display name (not the slug) so it matches the
-    # frontend's existing `Product.category: string` shape ("Football", etc.)
-    # with zero changes needed on the UI side.
     category = serializers.CharField(source="category.name", read_only=True)
     category_slug = serializers.CharField(source="category.slug", read_only=True)
     image = serializers.ImageField(use_url=True, required=False, allow_null=True)
-    # Decimal renders as a string by default (precision-safe); the frontend
-    # type expects `rating: number`, and a 1-decimal star rating has no
-    # precision to lose, so coerce it to a native JSON number here.
     rating = serializers.DecimalField(max_digits=2, decimal_places=1, coerce_to_string=False)
+    list_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True
+    )
+    sale_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True
+    )
+    discount_percent = serializers.DecimalField(
+        max_digits=5, decimal_places=2, coerce_to_string=False
+    )
 
     class Meta:
         model = Product
@@ -61,6 +64,9 @@ class ProductSerializer(serializers.ModelSerializer):
             "category",
             "category_slug",
             "price_range",
+            "list_price",
+            "sale_price",
+            "discount_percent",
             "fabric",
             "rating",
             "review_count",

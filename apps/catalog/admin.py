@@ -37,6 +37,9 @@ class ProductAdmin(ModelAdmin):
         "category",
         "category_section",
         "price_range",
+        "list_price",
+        "sale_price",
+        "discount_percent",
         "is_featured",
         "is_active",
         "order",
@@ -45,6 +48,22 @@ class ProductAdmin(ModelAdmin):
     search_fields = ["name", "fabric"]
     ordering = ["order", "name"]
     autocomplete_fields = ["category"]
+    fields = [
+        "name",
+        "category",
+        "price_range",
+        "list_price",
+        "sale_price",
+        "discount_percent",
+        "fabric",
+        "rating",
+        "review_count",
+        "accent_color",
+        "image",
+        "is_featured",
+        "is_active",
+        "order",
+    ]
 
     @admin.display(description="Section")
     def category_section(self, obj):
