@@ -130,7 +130,10 @@ class Product(TimeStampedModel, SoftDeleteModel):
     price_range = models.CharField(
         max_length=60,
         blank=True,
-        help_text="Legacy price text shown in some sections; prefer sale_price + list_price for discounts.",
+        help_text=(
+            "Legacy price text shown in some sections; prefer sale_price + "
+            "list_price for discounts."
+        ),
     )
     list_price = models.DecimalField(
         max_digits=10,
