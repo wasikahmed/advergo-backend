@@ -52,7 +52,7 @@ class InvoiceAdmin(ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        return bool(request.user and request.user.is_superuser)
 
     @action(description="View PDF", icon="visibility", attrs={"target": "_blank"})
     def view_pdf_row(self, request, object_id):

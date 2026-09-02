@@ -97,11 +97,19 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
     autocomplete_fields = ["category", "product", "fabric", "design", "user"]
     inlines = [QuotationInline]
     actions = ["generate_and_send_quotation"]
-    actions_row = ["preview_quotation_row", "convert_to_order_row"]
+    actions_row = [
+        "preview_quotation_row",
+        "generate_quotation_row",
+        "convert_to_order_row",
+    ]
     # Same actions, available as buttons on the change form too -- staff
     # editing a quote shouldn't have to go back to the changelist just to
     # preview or convert it.
-    actions_detail = ["preview_quotation_row", "convert_to_order_row"]
+    actions_detail = [
+        "preview_quotation_row",
+        "generate_quotation_row",
+        "convert_to_order_row",
+    ]
 
     _submitted_fields = [
         "user",
@@ -158,6 +166,29 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
         response = HttpResponse(render_quotation_pdf_bytes(quote), content_type="application/pdf")
         response["Content-Disposition"] = f'inline; filename="{quote.reference_code}-preview.pdf"'
         return response
+
+    @action(description="Generate quotation", icon="request_quote")
+    def generate_quotation_row(self, request, object_id):
+        from apps.invoices.services import generate_and_send_quotation
+
+        quote = self.get_object(request, object_id)
+        if quote is None:
+            self.message_user(request, "Quote not found.", level=messages.ERROR)
+        else:
+            quotation = generate_and_send_quotation(quote, generated_by=request.user)
+            log_activity(
+                actor=request.user,
+                request=request,
+                verb="generated_quotation",
+                target=quote,
+                description=f"Generated quotation {quotation.quotation_number}",
+            )
+            self.message_user(
+                request,
+                f"Generated quotation for {quote.reference_code}.",
+                level=messages.SUCCESS,
+            )
+        return admin_action_redirect(request, reverse("admin:quotes_quoterequest_changelist"))
 
     @action(
         description="Convert to order",

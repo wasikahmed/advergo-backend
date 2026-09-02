@@ -8,6 +8,7 @@ FROM python:3.12-slim
 # at all, confirmed by WeasyPrint logging a missing-glyph box for ৳ without it.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
+    libglib2.0-0 \
     libpango-1.0-0 libpangocairo-1.0-0 libcairo2 libgdk-pixbuf-2.0-0 libffi-dev \
     fonts-noto-core \
     curl \
