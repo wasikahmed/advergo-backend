@@ -30,8 +30,7 @@ class Category(TimeStampedModel):
     )
     slug = models.SlugField(unique=True, max_length=40)
     name = models.CharField(max_length=80)
-    image = models.ImageField(
-        upload_to=category_image_upload_path, blank=True, null=True)
+    image = models.ImageField(upload_to=category_image_upload_path, blank=True, null=True)
     description = models.CharField(max_length=200, blank=True)
     is_featured = models.BooleanField(
         default=False,
@@ -74,8 +73,7 @@ class Fabric(TimeStampedModel, SoftDeleteModel):
     grade = models.CharField(max_length=80, blank=True)
     best_for = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(
-        upload_to="advergo/fabrics/", blank=True, null=True)
+    image = models.ImageField(upload_to="advergo/fabrics/", blank=True, null=True)
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -86,8 +84,7 @@ class Fabric(TimeStampedModel, SoftDeleteModel):
 
 
 class FabricImage(TimeStampedModel):
-    fabric = models.ForeignKey(
-        Fabric, on_delete=models.CASCADE, related_name="images")
+    fabric = models.ForeignKey(Fabric, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="advergo/fabrics/gallery/")
     order = models.PositiveIntegerField(default=0)
 
@@ -122,8 +119,7 @@ class SizeChartRow(TimeStampedModel):
         default=SizeChartAgeGroup.ADULT,
         help_text="Which size chart tab this row belongs to.",
     )
-    size_label = models.CharField(
-        max_length=10, help_text="e.g. S, M, L, XL, XXL")
+    size_label = models.CharField(max_length=10, help_text="e.g. S, M, L, XL, XXL")
     chest_in = models.DecimalField(
         "chest (in)", max_digits=5, decimal_places=1, null=True, blank=True
     )
@@ -142,8 +138,7 @@ class SizeChartRow(TimeStampedModel):
 
 class Product(TimeStampedModel, SoftDeleteModel):
     name = models.CharField(max_length=150)
-    category = models.ForeignKey(
-        Category, on_delete=models.PROTECT, related_name="products")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
     price_range = models.CharField(
         max_length=60,
         blank=True,
@@ -180,14 +175,12 @@ class Product(TimeStampedModel, SoftDeleteModel):
     accent_color = models.CharField(
         max_length=7, default="#eb2127", help_text="Hex color, e.g. #eb2127."
     )
-    image = models.ImageField(
-        upload_to="advergo/products/", blank=True, null=True)
+    image = models.ImageField(upload_to="advergo/products/", blank=True, null=True)
 
     is_featured = models.BooleanField(
         default=False, help_text="Shown in the homepage featured-products section."
     )
-    is_active = models.BooleanField(
-        default=True, help_text="Unpublish without deleting.")
+    is_active = models.BooleanField(default=True, help_text="Unpublish without deleting.")
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -196,26 +189,22 @@ class Product(TimeStampedModel, SoftDeleteModel):
     def clean(self):
         super().clean()
         if self.category_id and self.category.children.exists():
-            raise ValueError(
-                "Products must be assigned to a leaf category, not a parent section.")
+            raise ValueError("Products must be assigned to a leaf category, not a parent section.")
         if (
             self.list_price is not None
             and self.sale_price is not None
             and self.sale_price > self.list_price
         ):
-            raise ValueError(
-                "Sale price cannot be greater than the regular list price.")
+            raise ValueError("Sale price cannot be greater than the regular list price.")
         if (
             self.sale_price is not None
             and self.discount_percent == 0
             and self.list_price is not None
         ):
-            discount = ((self.list_price - self.sale_price) /
-                        self.list_price) * 100
+            discount = ((self.list_price - self.sale_price) / self.list_price) * 100
             self.discount_percent = round(discount, 2)
         if self.list_price is not None and self.sale_price is None and self.discount_percent > 0:
-            self.sale_price = self.list_price * \
-                (1 - (self.discount_percent / 100))
+            self.sale_price = self.list_price * (1 - (self.discount_percent / 100))
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -241,15 +230,13 @@ class Design(TimeStampedModel, SoftDeleteModel):
     category itself.
     """
 
-    category = models.ForeignKey(
-        Category, on_delete=models.PROTECT, related_name="designs")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="designs")
     name = models.CharField(max_length=150, blank=True)
     code = models.CharField(
         max_length=40, blank=True, help_text="Internal reference code shown to staff/customers."
     )
     image = models.ImageField(upload_to=design_upload_path)
-    is_active = models.BooleanField(
-        default=True, help_text="Unpublish without deleting.")
+    is_active = models.BooleanField(default=True, help_text="Unpublish without deleting.")
     order = models.PositiveIntegerField(default=0)
 
     class Meta:

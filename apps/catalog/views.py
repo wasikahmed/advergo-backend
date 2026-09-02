@@ -34,8 +34,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class FabricViewSet(viewsets.ModelViewSet):
-    queryset = Fabric.objects.filter(
-        deleted_at__isnull=True).prefetch_related("images")
+    queryset = Fabric.objects.filter(deleted_at__isnull=True).prefetch_related("images")
     serializer_class = FabricSerializer
     permission_classes = [ReadOnlyOrAdmin]
     pagination_class = None
