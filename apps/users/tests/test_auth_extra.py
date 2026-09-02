@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.users.models import StaffInvite
-from apps.users.otp import OTPPurpose
+from apps.users.otp import OTPPurpose, create_and_send_login_2fa_otp
 from apps.users.tests.factories import UserFactory
 from apps.users.tests.helpers import login
 
@@ -26,16 +26,14 @@ def api_client():
 # --- Admin 2FA ---------------------------------------------------------------
 
 
-def test_staff_login_requires_2fa_challenge(api_client):
+def test_staff_login_returns_tokens_directly(api_client):
     UserFactory(email="admin@example.com", password="Str0ngPassw0rd!", is_staff=True)
     response = api_client.post(
         "/api/v1/auth/login/", {"identifier": "admin@example.com", "password": "Str0ngPassw0rd!"}
     )
-    assert response.status_code == status.HTTP_202_ACCEPTED
-    assert response.data["twoFactorRequired"] is True
-    assert "access" not in response.data
-    assert len(mail.outbox) == 1
-    assert "verification code" in mail.outbox[0].body
+    assert response.status_code == status.HTTP_200_OK
+    assert "access" in response.data
+    assert len(mail.outbox) == 0
 
 
 def test_staff_login_completes_after_correct_otp(api_client):
@@ -48,11 +46,8 @@ def test_staff_login_completes_after_correct_otp(api_client):
 
 
 def test_2fa_verify_rejects_wrong_code_but_leaves_challenge_valid(api_client):
-    UserFactory(email="admin3@example.com", password="Str0ngPassw0rd!", is_staff=True)
-    login_response = api_client.post(
-        "/api/v1/auth/login/", {"identifier": "admin3@example.com", "password": "Str0ngPassw0rd!"}
-    )
-    challenge_id = login_response.data["challengeId"]
+    user = UserFactory(email="admin3@example.com", password="Str0ngPassw0rd!", is_staff=True)
+    challenge_id = create_and_send_login_2fa_otp(user)
 
     wrong = api_client.post(
         "/api/v1/auth/2fa/verify/", {"challengeId": challenge_id, "code": "000000"}
@@ -67,11 +62,8 @@ def test_2fa_verify_rejects_wrong_code_but_leaves_challenge_valid(api_client):
 
 
 def test_2fa_code_cannot_be_reused(api_client):
-    UserFactory(email="admin4@example.com", password="Str0ngPassw0rd!", is_staff=True)
-    login_response = api_client.post(
-        "/api/v1/auth/login/", {"identifier": "admin4@example.com", "password": "Str0ngPassw0rd!"}
-    )
-    challenge_id = login_response.data["challengeId"]
+    user = UserFactory(email="admin4@example.com", password="Str0ngPassw0rd!", is_staff=True)
+    challenge_id = create_and_send_login_2fa_otp(user)
     code = re.search(r"code is (\d{6})", mail.outbox[-1].body).group(1)
 
     first = api_client.post("/api/v1/auth/2fa/verify/", {"challengeId": challenge_id, "code": code})
@@ -84,11 +76,8 @@ def test_2fa_code_cannot_be_reused(api_client):
 
 
 def test_2fa_resend_sends_a_new_code_that_verifies(api_client):
-    UserFactory(email="admin7@example.com", password="Str0ngPassw0rd!", is_staff=True)
-    login_response = api_client.post(
-        "/api/v1/auth/login/", {"identifier": "admin7@example.com", "password": "Str0ngPassw0rd!"}
-    )
-    challenge_id = login_response.data["challengeId"]
+    user = UserFactory(email="admin7@example.com", password="Str0ngPassw0rd!", is_staff=True)
+    challenge_id = create_and_send_login_2fa_otp(user)
     first_code = re.search(r"code is (\d{6})", mail.outbox[-1].body).group(1)
 
     resend = api_client.post("/api/v1/auth/2fa/resend/", {"challengeId": challenge_id})
@@ -254,7 +243,7 @@ def test_admin_can_invite_and_invitee_can_accept(api_client):
         "/api/v1/auth/staff-invites/", {"email": "newstaff2@example.com", "group": group.id}
     )
     assert invite_response.status_code == status.HTTP_201_CREATED
-    assert len(mail.outbox) == 2  # 2FA code + invite email
+    assert len(mail.outbox) == 1  # invite email; password login is direct
     invite = StaffInvite.objects.get(email="newstaff2@example.com")
 
     accept_client = APIClient()

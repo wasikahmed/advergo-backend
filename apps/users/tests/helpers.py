@@ -4,10 +4,7 @@ from django.core import mail
 
 
 def login(api_client, email, password="Str0ngPassw0rd!"):
-    """Logs in via the API, transparently completing the email-OTP 2FA step
-    for staff accounts. The code itself is only ever stored as a hash, so
-    it's read out of the sent email body (tests use the locmem backend)
-    rather than queried back from storage."""
+    """Logs in via the API, with compatibility for any legacy OTP response."""
     response = api_client.post("/api/v1/auth/login/", {"identifier": email, "password": password})
 
     if response.data.get("twoFactorRequired"):

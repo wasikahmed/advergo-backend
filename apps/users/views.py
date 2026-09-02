@@ -110,9 +110,8 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     """
-    Staff accounts don't get tokens directly: a valid password only unlocks
-    an email-OTP challenge (see TwoFactorVerifyView). Non-staff accounts log
-    in normally in one step.
+    A valid email/phone and password logs the user in directly. Verification
+    codes are reserved for explicit verification flows such as password reset.
     """
 
     serializer_class = EmailOrPhoneTokenObtainPairSerializer
@@ -125,19 +124,9 @@ class LoginView(TokenObtainPairView):
         except TokenError as e:
             raise InvalidToken(e.args[0]) from e
 
-        user = serializer.user
-        if user.is_staff:
-            # Not logged in yet -- password only unlocks the 2FA challenge;
-            # the actual login is logged once that challenge is passed (see
-            # TwoFactorVerifyView), same as a bad password never reaches
-            # here at all (caught by the user_login_failed signal instead).
-            challenge_id = create_and_send_login_2fa_otp(user)
-            return Response(
-                {"twoFactorRequired": True, "challengeId": challenge_id},
-                status=status.HTTP_202_ACCEPTED,
-            )
-
-        log_login(request=request, channel=LoginChannel.API_PASSWORD, success=True, user=user)
+        log_login(
+            request=request, channel=LoginChannel.API_PASSWORD, success=True, user=serializer.user
+        )
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
 
 
@@ -252,8 +241,8 @@ class PasswordResetConfirmView(generics.GenericAPIView):
 
 class GoogleLoginView(generics.GenericAPIView):
     """Verifies a Google ID token from the frontend and issues our own JWT,
-    creating the account on first sign-in. Staff accounts still go through
-    the email-OTP 2FA challenge, same as password login."""
+    creating the account on first sign-in. Google has already verified the
+    account's email, so this flow does not add a second verification code."""
 
     serializer_class = GoogleLoginSerializer
     permission_classes = [permissions.AllowAny]
@@ -307,15 +296,6 @@ class GoogleLoginView(generics.GenericAPIView):
                 update_fields.append("avatar_url")
             if update_fields:
                 user.save(update_fields=update_fields)
-
-        if user.is_staff:
-            # See TwoFactorVerifyView -- not logged in yet, the OTP layer
-            # doesn't distinguish this from a password-originated challenge.
-            challenge_id = create_and_send_login_2fa_otp(user)
-            return Response(
-                {"twoFactorRequired": True, "challengeId": challenge_id},
-                status=status.HTTP_202_ACCEPTED,
-            )
 
         log_login(request=request, channel=LoginChannel.API_GOOGLE, success=True, user=user)
         return Response(_tokens_for_user(user), status=status.HTTP_200_OK)
