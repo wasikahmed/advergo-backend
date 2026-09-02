@@ -7,6 +7,7 @@ from django.test import Client
 from rest_framework.test import APIClient
 
 from apps.activity.models import LoginChannel, LoginEvent
+from apps.users.otp import create_and_send_login_2fa_otp
 from apps.users.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
@@ -47,34 +48,22 @@ def test_customer_password_login_logs_failure(api_client):
     assert event.identifier == "cust2@example.com"
 
 
-def test_staff_password_login_only_logs_after_2fa_completes(api_client):
-    UserFactory(email="staff1@example.com", password="Str0ngPassw0rd!", is_staff=True)
+def test_staff_password_login_logs_success_directly(api_client):
+    staff = UserFactory(email="staff1@example.com", password="Str0ngPassw0rd!", is_staff=True)
     login_response = api_client.post(
         "/api/v1/auth/login/", {"identifier": "staff1@example.com", "password": "Str0ngPassw0rd!"}
     )
-    assert login_response.status_code == 202
-    # Password matched, but the 2FA gate hasn't been passed yet -- no login
-    # recorded as complete until it is.
-    assert not LoginEvent.objects.exists()
-
-    challenge_id = login_response.data["challengeId"]
-    code = re.search(r"code is (\d{6})", mail.outbox[-1].body).group(1)
-    verify_response = api_client.post(
-        "/api/v1/auth/2fa/verify/", {"challengeId": challenge_id, "code": code}
-    )
-    assert verify_response.status_code == 200
+    assert login_response.status_code == 200
 
     event = LoginEvent.objects.get()
     assert event.success is True
-    assert event.user.email == "staff1@example.com"
+    assert event.channel == LoginChannel.API_PASSWORD
+    assert event.user == staff
 
 
 def test_wrong_2fa_code_logs_failure(api_client):
-    UserFactory(email="staff2@example.com", password="Str0ngPassw0rd!", is_staff=True)
-    login_response = api_client.post(
-        "/api/v1/auth/login/", {"identifier": "staff2@example.com", "password": "Str0ngPassw0rd!"}
-    )
-    challenge_id = login_response.data["challengeId"]
+    staff = UserFactory(email="staff2@example.com", is_staff=True)
+    challenge_id = create_and_send_login_2fa_otp(staff)
 
     api_client.post("/api/v1/auth/2fa/verify/", {"challengeId": challenge_id, "code": "000000"})
 
