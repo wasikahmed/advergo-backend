@@ -1,7 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
 
-from .models import Category, Design, Fabric, Product, SizeChartRow
+from .models import Category, Design, Fabric, FabricImage, Product, SizeChartRow
 
 
 class SubcategoryInline(TabularInline):
@@ -22,12 +22,20 @@ class CategoryAdmin(ModelAdmin):
     inlines = [SubcategoryInline]
 
 
+class FabricImageInline(TabularInline):
+    model = FabricImage
+    extra = 1
+    fields = ["image", "order"]
+    ordering = ["order", "id"]
+
+
 @admin.register(Fabric)
 class FabricAdmin(ModelAdmin):
     list_display = ["name", "grade", "best_for", "order"]
     list_filter = ["grade"]
     search_fields = ["name", "grade", "best_for"]
     ordering = ["order", "name"]
+    inlines = [FabricImageInline]
 
 
 @admin.register(Product)
