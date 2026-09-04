@@ -1,5 +1,10 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.db.models import Count
+from django.urls import reverse
 from unfold.admin import ModelAdmin, TabularInline
+from unfold.decorators import action
+
+from apps.core.utils import admin_action_redirect
 
 from .models import Category, Design, Fabric, FabricImage, Product, SizeChartRow
 
@@ -14,12 +19,45 @@ class SubcategoryInline(TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(ModelAdmin):
-    list_display = ["name", "slug", "parent", "is_featured", "order"]
+    """
+    The changelist defaults to main categories only (`parent` is unset) so
+    staff aren't scrolling through every subcategory mixed in at once --
+    click "View subcategories" (or the Parent filter) to drill into one.
+    Passing a Parent filter explicitly (including "-" for "no parent") shows
+    exactly what was asked for instead.
+    """
+
+    list_display = ["name", "slug", "parent", "is_featured", "order", "subcategory_count"]
     list_filter = ["is_featured", "parent"]
     ordering = ["order", "name"]
     search_fields = ["name", "slug"]
     autocomplete_fields = ["parent"]
     inlines = [SubcategoryInline]
+    actions_row = ["view_subcategories_row"]
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request).annotate(_subcategory_count=Count("children"))
+        if "parent__id__exact" not in request.GET and "parent__isnull" not in request.GET:
+            queryset = queryset.filter(parent__isnull=True)
+        return queryset
+
+    @admin.display(description="Subcategories")
+    def subcategory_count(self, obj):
+        return obj._subcategory_count
+
+    @action(description="View subcategories", icon="subdirectory_arrow_right")
+    def view_subcategories_row(self, request, object_id):
+        category = self.get_object(request, object_id)
+        if category is None:
+            self.message_user(request, "Category not found.", level=messages.ERROR)
+            return admin_action_redirect(request, reverse("admin:catalog_category_changelist"))
+        if category._subcategory_count == 0:
+            self.message_user(
+                request, f"{category.name} has no subcategories.", level=messages.INFO
+            )
+            return admin_action_redirect(request, reverse("admin:catalog_category_changelist"))
+        url = f"{reverse('admin:catalog_category_changelist')}?parent__id__exact={category.pk}"
+        return admin_action_redirect(request, url)
 
 
 class FabricImageInline(TabularInline):
@@ -52,9 +90,20 @@ class ProductAdmin(ModelAdmin):
         "is_active",
         "order",
     ]
+    # "category__parent" here is the *main* category (a product's own
+    # `category` is always a leaf -- see formfield_for_foreignkey below) --
+    # picking one in the sidebar scopes the list to just that main category.
     list_filter = ["is_featured", "is_active", "category__parent"]
     search_fields = ["name", "fabric"]
-    ordering = ["order", "name"]
+    # Grouped by main category then subcategory, so products naturally
+    # cluster together on the page instead of one flat alphabetical pile.
+    ordering = [
+        "category__parent__order",
+        "category__parent__name",
+        "category__order",
+        "order",
+        "name",
+    ]
     autocomplete_fields = ["category"]
     fields = [
         "name",
