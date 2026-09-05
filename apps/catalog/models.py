@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.core.models import SoftDeleteModel, TimeStampedModel
+from apps.core.models import SoftDeleteManager, SoftDeleteModel, TimeStampedModel
 
 
 def category_image_upload_path(instance, filename):
@@ -136,9 +136,28 @@ class SizeChartRow(TimeStampedModel):
         return f"{scope} · {self.size_label}"
 
 
+class ProductType(models.TextChoices):
+    READY = "ready", "Ready product"
+    SHOWCASE = "showcase", "Showcase (made-to-order example)"
+
+
 class Product(TimeStampedModel, SoftDeleteModel):
     name = models.CharField(max_length=150)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
+    product_type = models.CharField(
+        max_length=10,
+        choices=ProductType.choices,
+        default=ProductType.READY,
+        help_text="Ready products are priced and shown with Add to Cart. Showcase "
+        "products are made-to-order examples with no price -- managed from their "
+        "own admin screens (Ready Products / Showcase Products), not edited here directly.",
+    )
+    age_group = models.CharField(
+        max_length=5,
+        choices=SizeChartAgeGroup.choices,
+        default=SizeChartAgeGroup.ADULT,
+        help_text="Storefront Adult/Kids filter for Ready Products.",
+    )
     price_range = models.CharField(
         max_length=60,
         blank=True,
@@ -212,6 +231,41 @@ class Product(TimeStampedModel, SoftDeleteModel):
 
     def __str__(self):
         return self.name
+
+
+class ReadyProductManager(SoftDeleteManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(product_type=ProductType.READY)
+
+
+class ShowcaseProductManager(SoftDeleteManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(product_type=ProductType.SHOWCASE)
+
+
+class ReadyProduct(Product):
+    """Admin-only proxy: the "Ready Products" upload screen. Same table,
+    same model as `Product`, just pre-filtered and re-labeled so staff have
+    one obvious place to add priced, in-stock products."""
+
+    objects = ReadyProductManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Ready product"
+        verbose_name_plural = "Ready products"
+
+
+class ShowcaseProduct(Product):
+    """Admin-only proxy: the "Showcase Products" upload screen for
+    made-to-order examples -- no price fields on this form at all."""
+
+    objects = ShowcaseProductManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Showcase product"
+        verbose_name_plural = "Showcase products"
 
 
 def design_upload_path(instance, filename):

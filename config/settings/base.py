@@ -482,8 +482,20 @@ UNFOLD = {
                         "permission": _nav_permission("catalog.view_category"),
                     },
                     {
-                        "title": _("Products"),
+                        "title": _("Ready Products"),
                         "icon": "inventory_2",
+                        "link": reverse_lazy("admin:catalog_readyproduct_changelist"),
+                        "permission": _nav_permission("catalog.view_readyproduct"),
+                    },
+                    {
+                        "title": _("Showcase Products"),
+                        "icon": "collections_bookmark",
+                        "link": reverse_lazy("admin:catalog_showcaseproduct_changelist"),
+                        "permission": _nav_permission("catalog.view_showcaseproduct"),
+                    },
+                    {
+                        "title": _("All Products (search)"),
+                        "icon": "inventory",
                         "link": reverse_lazy("admin:catalog_product_changelist"),
                         "permission": _nav_permission("catalog.view_product"),
                     },
@@ -494,7 +506,7 @@ UNFOLD = {
                         "permission": _nav_permission("catalog.view_fabric"),
                     },
                     {
-                        "title": _("Designs"),
+                        "title": _("Design Collection"),
                         "icon": "palette",
                         "link": reverse_lazy("admin:catalog_design_changelist"),
                         "permission": _nav_permission("catalog.view_design"),

@@ -6,7 +6,17 @@ from unfold.decorators import action
 
 from apps.core.utils import admin_action_redirect
 
-from .models import Category, Design, Fabric, FabricImage, Product, SizeChartRow
+from .models import (
+    Category,
+    Design,
+    Fabric,
+    FabricImage,
+    Product,
+    ProductType,
+    ReadyProduct,
+    ShowcaseProduct,
+    SizeChartRow,
+)
 
 
 class SubcategoryInline(TabularInline):
@@ -37,7 +47,19 @@ class CategoryAdmin(ModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request).annotate(_subcategory_count=Count("children"))
-        if "parent__id__exact" not in request.GET and "parent__isnull" not in request.GET:
+        # The site-wide autocomplete endpoint (used by every
+        # `autocomplete_fields = ["category"]` elsewhere -- Product, Design,
+        # SizeChartRow) calls THIS get_queryset as its base queryset, with
+        # no parent filter param of its own. Applying the changelist's
+        # "main categories only" default there would make every subcategory
+        # (e.g. "Polo Shirt -> Half Sleeve") permanently unselectable
+        # anywhere else in the admin, so it's explicitly excluded here.
+        is_autocomplete = request.path.endswith("/autocomplete/")
+        if (
+            not is_autocomplete
+            and "parent__id__exact" not in request.GET
+            and "parent__isnull" not in request.GET
+        ):
             queryset = queryset.filter(parent__isnull=True)
         return queryset
 
@@ -76,23 +98,12 @@ class FabricAdmin(ModelAdmin):
     inlines = [FabricImageInline]
 
 
-@admin.register(Product)
-class ProductAdmin(ModelAdmin):
-    list_display = [
-        "name",
-        "category",
-        "category_section",
-        "price_range",
-        "list_price",
-        "sale_price",
-        "discount_percent",
-        "is_featured",
-        "is_active",
-        "order",
-    ]
-    # "category__parent" here is the *main* category (a product's own
-    # `category` is always a leaf -- see formfield_for_foreignkey below) --
-    # picking one in the sidebar scopes the list to just that main category.
+class BaseProductAdmin(ModelAdmin):
+    """Shared behavior for the Product admin and its two upload-focused
+    proxies (Ready Products / Showcase Products) -- category scoping,
+    ordering, and the leaf-category-only autocomplete restriction all
+    apply identically regardless of which screen staff are using."""
+
     list_filter = ["is_featured", "is_active", "category__parent"]
     search_fields = ["name", "fabric"]
     # Grouped by main category then subcategory, so products naturally
@@ -105,9 +116,49 @@ class ProductAdmin(ModelAdmin):
         "name",
     ]
     autocomplete_fields = ["category"]
+
+    @admin.display(description="Section")
+    def category_section(self, obj):
+        return obj.category.section if obj.category_id else "-"
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("category", "category__parent")
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == "category":
+            # A leaf category is any product bucket, whether it's nested
+            # under a parent (Polo Shirt -> Half Sleeve) or stands on its
+            # own (Marathon, Cricket, ...). A category with children is
+            # always a grouping node, never itself a product bucket.
+            field.queryset = field.queryset.filter(children__isnull=True)
+        return field
+
+
+@admin.register(Product)
+class ProductAdmin(BaseProductAdmin):
+    """Full, unfiltered view across every product -- for search/cleanup
+    only. Day-to-day uploads happen on the Ready Products / Showcase
+    Products screens below, which force the right `product_type`
+    automatically instead of staff having to set it by hand."""
+
+    list_display = [
+        "name",
+        "category",
+        "category_section",
+        "product_type",
+        "age_group",
+        "price_range",
+        "is_featured",
+        "is_active",
+        "order",
+    ]
+    list_filter = [*BaseProductAdmin.list_filter, "product_type"]
     fields = [
         "name",
         "category",
+        "product_type",
+        "age_group",
         "price_range",
         "list_price",
         "sale_price",
@@ -122,25 +173,77 @@ class ProductAdmin(ModelAdmin):
         "order",
     ]
 
-    @admin.display(description="Section")
-    def category_section(self, obj):
-        return obj.category.section if obj.category_id else "-"
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("category", "category__parent")
+@admin.register(ReadyProduct)
+class ReadyProductAdmin(BaseProductAdmin):
+    """Upload screen for priced, in-stock products (club/tournament
+    jerseys, etc.) -- shown on the storefront with Add to Cart."""
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
-        if db_field.name == "category":
-            # A leaf category is any product bucket, whether it's nested
-            # under a parent (Polo Shirt -> Half Sleeve) or stands on its
-            # own (Marathon, Cricket, ...). The old `parent__isnull=False`
-            # clause here wrongly excluded every standalone top-level
-            # category too -- which is where this store's entire real
-            # catalog actually lives, making them impossible to pick when
-            # adding a new product.
-            field.queryset = field.queryset.filter(children__isnull=True)
-        return field
+    list_display = [
+        "name",
+        "category",
+        "category_section",
+        "age_group",
+        "price_range",
+        "list_price",
+        "sale_price",
+        "discount_percent",
+        "is_featured",
+        "is_active",
+        "order",
+    ]
+    fields = [
+        "name",
+        "category",
+        "age_group",
+        "price_range",
+        "list_price",
+        "sale_price",
+        "discount_percent",
+        "fabric",
+        "rating",
+        "review_count",
+        "accent_color",
+        "image",
+        "is_featured",
+        "is_active",
+        "order",
+    ]
+
+    def save_model(self, request, obj, form, change):
+        obj.product_type = ProductType.READY
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(ShowcaseProduct)
+class ShowcaseProductAdmin(BaseProductAdmin):
+    """Upload screen for made-to-order examples -- no price fields at
+    all, per spec: these are inspiration, customers order via a quote."""
+
+    list_display = [
+        "name",
+        "category",
+        "category_section",
+        "is_featured",
+        "is_active",
+        "order",
+    ]
+    fields = [
+        "name",
+        "category",
+        "fabric",
+        "rating",
+        "review_count",
+        "accent_color",
+        "image",
+        "is_featured",
+        "is_active",
+        "order",
+    ]
+
+    def save_model(self, request, obj, form, change):
+        obj.product_type = ProductType.SHOWCASE
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(SizeChartRow)

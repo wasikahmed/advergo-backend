@@ -78,6 +78,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "name",
             "category",
             "category_slug",
+            "product_type",
+            "age_group",
             "price_range",
             "list_price",
             "sale_price",
