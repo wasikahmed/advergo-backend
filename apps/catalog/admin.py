@@ -132,9 +132,14 @@ class ProductAdmin(ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         field = super().formfield_for_foreignkey(db_field, request, **kwargs)
         if db_field.name == "category":
-            field.queryset = field.queryset.filter(parent__isnull=False).filter(
-                children__isnull=True
-            )
+            # A leaf category is any product bucket, whether it's nested
+            # under a parent (Polo Shirt -> Half Sleeve) or stands on its
+            # own (Marathon, Cricket, ...). The old `parent__isnull=False`
+            # clause here wrongly excluded every standalone top-level
+            # category too -- which is where this store's entire real
+            # catalog actually lives, making them impossible to pick when
+            # adding a new product.
+            field.queryset = field.queryset.filter(children__isnull=True)
         return field
 
 
