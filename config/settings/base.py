@@ -615,6 +615,12 @@ UNFOLD = {
                         "link": reverse_lazy("admin:content_companyinfo_changelist"),
                         "permission": _nav_permission("content.view_companyinfo"),
                     },
+                    {
+                        "title": _("Social links"),
+                        "icon": "share",
+                        "link": reverse_lazy("admin:content_sociallink_changelist"),
+                        "permission": _nav_permission("content.view_sociallink"),
+                    },
                 ],
             },
             {
@@ -627,6 +633,12 @@ UNFOLD = {
                         "icon": "reviews",
                         "link": reverse_lazy("admin:reviews_review_changelist"),
                         "permission": _nav_permission("reviews.view_review"),
+                    },
+                    {
+                        "title": _("Product reviews"),
+                        "icon": "rate_review",
+                        "link": reverse_lazy("admin:reviews_productreview_changelist"),
+                        "permission": _nav_permission("reviews.view_productreview"),
                     },
                     {
                         "title": _("Wishlist items"),
