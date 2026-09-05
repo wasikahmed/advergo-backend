@@ -24,6 +24,15 @@ class SoftDeleteQuerySet(models.QuerySet):
 
 
 class SoftDeleteManager(models.Manager):
+    # Without this, a model whose only manager is this one has NO manager at
+    # all in a data migration's historical model state (Django only carries
+    # a manager into migrations if some manager on the model opts in) --
+    # `SomeModel.objects` then raises AttributeError, but only on a fresh
+    # database where every migration actually runs top to bottom (exactly
+    # what CI's throwaway Postgres does, unlike a long-lived dev DB where
+    # this migration already ran once and never gets replayed).
+    use_in_migrations = True
+
     def get_queryset(self):
         return SoftDeleteQuerySet(self.model, using=self._db).alive()
 
