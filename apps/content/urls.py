@@ -12,6 +12,7 @@ from .views import (
     HomeSectionBannerViewSet,
     MobileBankingAgentViewSet,
     ProcessStepViewSet,
+    SocialLinkViewSet,
     StatViewSet,
     TeamMemberViewSet,
 )
@@ -28,6 +29,7 @@ router.register("gallery", GalleryItemViewSet, basename="gallery-item")
 router.register("team", TeamMemberViewSet, basename="team-member")
 router.register("bank-accounts", BankAccountViewSet, basename="bank-account")
 router.register("mobile-banking", MobileBankingAgentViewSet, basename="mobile-banking-agent")
+router.register("social-links", SocialLinkViewSet, basename="social-link")
 
 urlpatterns = [
     path("company/", CompanyInfoView.as_view(), name="company-info"),

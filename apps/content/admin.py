@@ -14,6 +14,7 @@ from .models import (
     MobileBankingAgent,
     OfficialDocument,
     ProcessStep,
+    SocialLink,
     Stat,
     TeamMember,
 )
@@ -89,6 +90,14 @@ class BankAccountAdmin(ModelAdmin):
 class MobileBankingAgentAdmin(ModelAdmin):
     list_display = ["provider", "agent_number", "label", "order"]
     ordering = ["order", "provider"]
+
+
+@admin.register(SocialLink)
+class SocialLinkAdmin(ModelAdmin):
+    list_display = ["platform", "url", "is_active", "order"]
+    list_editable = ["is_active", "order"]
+    list_filter = ["platform", "is_active"]
+    ordering = ["order", "platform"]
 
 
 @admin.register(OfficialDocument)

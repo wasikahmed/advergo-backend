@@ -11,6 +11,7 @@ from .models import (
     HomeSectionBanner,
     MobileBankingAgent,
     ProcessStep,
+    SocialLink,
     Stat,
     TeamMember,
 )
@@ -135,3 +136,9 @@ class MobileBankingAgentSerializer(serializers.ModelSerializer):
     class Meta:
         model = MobileBankingAgent
         fields = ["id", "provider", "agent_number", "label"]
+
+
+class SocialLinkSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SocialLink
+        fields = ["id", "platform", "url"]

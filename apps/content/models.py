@@ -258,6 +258,32 @@ class MobileBankingAgent(TimeStampedModel):
         return f"{self.provider} — {self.agent_number}"
 
 
+class SocialPlatform(models.TextChoices):
+    FACEBOOK = "facebook", "Facebook"
+    INSTAGRAM = "instagram", "Instagram"
+    X = "x", "X (Twitter)"
+    LINKEDIN = "linkedin", "LinkedIn"
+    YOUTUBE = "youtube", "YouTube"
+    TIKTOK = "tiktok", "TikTok"
+    WHATSAPP = "whatsapp", "WhatsApp"
+    PINTEREST = "pinterest", "Pinterest"
+
+
+class SocialLink(TimeStampedModel):
+    """Footer social icons -- add/remove/reorder from admin, no code change."""
+
+    platform = models.CharField(max_length=20, choices=SocialPlatform.choices)
+    url = models.URLField()
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "platform"]
+
+    def __str__(self):
+        return f"{self.get_platform_display()} — {self.url}"
+
+
 class OfficialDocumentType(models.TextChoices):
     TRADE_LICENSE = "trade_license", "Trade License"
     TIN = "tin", "TIN Certificate"

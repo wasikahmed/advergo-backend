@@ -16,6 +16,7 @@ from .models import (
     HomeSectionBanner,
     MobileBankingAgent,
     ProcessStep,
+    SocialLink,
     Stat,
     TeamMember,
 )
@@ -30,6 +31,7 @@ from .serializers import (
     HomeSectionBannerSerializer,
     MobileBankingAgentSerializer,
     ProcessStepSerializer,
+    SocialLinkSerializer,
     StatSerializer,
     TeamMemberSerializer,
 )
@@ -122,6 +124,19 @@ class MobileBankingAgentViewSet(viewsets.ModelViewSet):
     serializer_class = MobileBankingAgentSerializer
     permission_classes = [ReadOnlyOrAdmin]
     pagination_class = None
+
+
+class SocialLinkViewSet(viewsets.ModelViewSet):
+    queryset = SocialLink.objects.all()
+    serializer_class = SocialLinkSerializer
+    permission_classes = [ReadOnlyOrAdmin]
+    pagination_class = None
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.action == "list":
+            queryset = queryset.filter(is_active=True)
+        return queryset
 
 
 class CompanyInfoView(generics.RetrieveUpdateAPIView):
