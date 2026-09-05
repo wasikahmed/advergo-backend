@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Design, Fabric, FabricImage, Product, SizeChartRow
+from .models import Category, Design, Fabric, FabricImage, Product, ProductImage, SizeChartRow
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -56,10 +56,19 @@ class SizeChartRowSerializer(serializers.ModelSerializer):
         ]
 
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(use_url=True)
+
+    class Meta:
+        model = ProductImage
+        fields = ["id", "image", "order"]
+
+
 class ProductSerializer(serializers.ModelSerializer):
     category = serializers.CharField(source="category.name", read_only=True)
     category_slug = serializers.CharField(source="category.slug", read_only=True)
     image = serializers.ImageField(use_url=True, required=False, allow_null=True)
+    images = serializers.SerializerMethodField()
     rating = serializers.DecimalField(max_digits=2, decimal_places=1, coerce_to_string=False)
     list_price = serializers.DecimalField(
         max_digits=10, decimal_places=2, coerce_to_string=False, allow_null=True
@@ -89,8 +98,15 @@ class ProductSerializer(serializers.ModelSerializer):
             "review_count",
             "accent_color",
             "image",
+            "images",
             "is_featured",
         ]
+
+    def get_images(self, obj):
+        gallery = ProductImageSerializer(obj.images.all(), many=True, context=self.context).data
+        if obj.image:
+            return [{"id": f"legacy-{obj.pk}", "image": obj.image.url}] + gallery
+        return gallery
 
 
 class DesignSerializer(serializers.ModelSerializer):

@@ -72,7 +72,7 @@
     <tbody>
       <tr>
         <td>
-          {% if quote.category %}{{ quote.category.name }}{% elif quote.product %}{{ quote.product.name }}{% else %}Custom sportswear order{% endif %}
+          {% if quote.custom_product_name %}{{ quote.custom_product_name }}{% elif quote.category %}{{ quote.category.name }}{% elif quote.product %}{{ quote.product.name }}{% else %}Custom sportswear order{% endif %}
           {% if quote.fabric %}<br /><span class="company-detail">Fabric: {{ quote.fabric.name }}</span>{% endif %}
           {% if quote.design %}<br /><span class="company-detail">Design: {{ quote.design.name|default:quote.design.code }}</span>{% endif %}
           {% if quote.size_breakdown %}<br /><span class="company-detail">Sizes: {{ quote.size_breakdown }}</span>{% endif %}

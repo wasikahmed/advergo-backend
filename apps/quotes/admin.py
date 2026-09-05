@@ -118,6 +118,7 @@ class QuoteRequestAdmin(SimpleHistoryAdmin, ModelAdmin):
         "email",
         "category",
         "product",
+        "custom_product_name",
         "fabric",
         "design",
         "quantity",

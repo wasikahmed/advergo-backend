@@ -47,6 +47,13 @@ class QuoteRequest(TimeStampedModel):
     product = models.ForeignKey(
         Product, null=True, blank=True, on_delete=models.SET_NULL, related_name="quote_requests"
     )
+    custom_product_name = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="For an item that isn't in the catalog -- typically an order taken by "
+        "phone/WhatsApp/inbox. Shown on the quotation PDF instead of a catalog product "
+        "when set; leave blank when `product` above is used instead.",
+    )
     fabric = models.ForeignKey(
         Fabric, null=True, blank=True, on_delete=models.SET_NULL, related_name="quote_requests"
     )

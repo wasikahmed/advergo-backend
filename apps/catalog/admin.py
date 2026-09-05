@@ -12,6 +12,7 @@ from .models import (
     Fabric,
     FabricImage,
     Product,
+    ProductImage,
     ProductType,
     ReadyProduct,
     ShowcaseProduct,
@@ -98,11 +99,19 @@ class FabricAdmin(ModelAdmin):
     inlines = [FabricImageInline]
 
 
+class ProductImageInline(TabularInline):
+    model = ProductImage
+    extra = 1
+    fields = ["image", "order"]
+    ordering = ["order", "id"]
+
+
 class BaseProductAdmin(ModelAdmin):
     """Shared behavior for the Product admin and its two upload-focused
     proxies (Ready Products / Showcase Products) -- category scoping,
-    ordering, and the leaf-category-only autocomplete restriction all
-    apply identically regardless of which screen staff are using."""
+    ordering, the leaf-category-only autocomplete restriction, and the
+    multi-image gallery all apply identically regardless of which screen
+    staff are using."""
 
     list_filter = ["is_featured", "is_active", "category__parent"]
     search_fields = ["name", "fabric"]
@@ -116,6 +125,7 @@ class BaseProductAdmin(ModelAdmin):
         "name",
     ]
     autocomplete_fields = ["category"]
+    inlines = [ProductImageInline]
 
     @admin.display(description="Section")
     def category_section(self, obj):

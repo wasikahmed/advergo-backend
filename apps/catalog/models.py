@@ -268,6 +268,21 @@ class ShowcaseProduct(Product):
         verbose_name_plural = "Showcase products"
 
 
+class ProductImage(TimeStampedModel):
+    """Extra gallery photos for a product, beyond its single main `image`
+    (kept for the card/cover shot) -- same pattern as FabricImage."""
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="advergo/products/gallery/")
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return f"{self.product.name} image {self.pk}"
+
+
 def design_upload_path(instance, filename):
     category_slug = instance.category.slug if instance.category_id else "uncategorized"
     return f"advergo/designs/{category_slug}/{filename}"

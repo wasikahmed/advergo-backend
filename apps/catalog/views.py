@@ -41,8 +41,10 @@ class FabricViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(deleted_at__isnull=True, is_active=True).select_related(
-        "category"
+    queryset = (
+        Product.objects.filter(deleted_at__isnull=True, is_active=True)
+        .select_related("category")
+        .prefetch_related("images")
     )
     serializer_class = ProductSerializer
     permission_classes = [ReadOnlyOrAdmin]
